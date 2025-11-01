@@ -14,6 +14,7 @@
 - **Vite** - Build tool and dev server
 - **Radix UI** - Headless UI components
 - **Lucide React** - Icon library
+- **shadcn/ui** - a collection of beautifully-designed, accessible components and a code distribution platform. 
 
 ## Development Tools
 - **Laravel Pint** - PHP code formatter
