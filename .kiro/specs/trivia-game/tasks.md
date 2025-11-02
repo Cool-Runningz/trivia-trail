@@ -14,20 +14,20 @@
   - Implement error handling with graceful fallbacks
   - _Requirements: 1.1, 1.2, 1.3, 3.2, 3.3, 7.1, 7.2_
 
-- [ ] 2. Create backend controllers for API endpoints
+- [x] 2. Create backend controllers for API endpoints
   - Implement TriviaController as pass-through proxy
   - Create minimal GameController for page routing
   - Add proper HTTP status codes and JSON responses
   - _Requirements: 1.4, 2.1, 3.1_
 
-- [ ] 2.1 Create TriviaController
+- [x] 2.1 Create TriviaController
   - Implement categories() method with /api/categories endpoint
   - Implement questions() method with /api/questions endpoint
   - Add request validation for question parameters
   - Integrate with OpenTriviaService for data fetching
   - _Requirements: 1.1, 1.2, 1.4, 2.2, 2.3, 2.4_
 
-- [ ] 2.2 Create GameController for page routing
+- [x] 2.2 Create GameController for page routing
   - Implement setup() method for game setup page
   - Implement play() method for game play page
   - No game state management (handled client-side)
