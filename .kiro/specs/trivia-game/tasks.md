@@ -1,12 +1,12 @@
 # Implementation Plan
 
-- [ ] 1. Create external API service for pass-through functionality
+- [x] 1. Create external API service for pass-through functionality
   - Implement OpenTriviaService for real-time API communication
   - Add caching for categories and error handling for API failures
   - Process API responses with HTML decoding and answer shuffling
   - _Requirements: 1.1, 1.3, 3.1, 3.2, 3.3, 7.1, 7.2_
 
-- [ ] 1.1 Create OpenTriviaService class
+- [x] 1.1 Create OpenTriviaService class
   - Implement getCategories() method with 1-hour caching
   - Implement getQuestions() method with parameter validation
   - Add HTML entity decoding for question text and answers
