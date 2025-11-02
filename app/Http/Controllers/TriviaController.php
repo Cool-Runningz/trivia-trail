@@ -2,10 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\QuestionsRequest;
 use App\Services\OpenTriviaService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 
 class TriviaController extends Controller
 {
@@ -39,19 +38,13 @@ class TriviaController extends Controller
     /**
      * Get trivia questions from Open Trivia Database
      *
-     * @param Request $request
+     * @param QuestionsRequest $request
      * @return JsonResponse
      */
-    public function questions(Request $request): JsonResponse
+    public function questions(QuestionsRequest $request): JsonResponse
     {
         try {
-            // Validate request parameters
-            $validated = $request->validate([
-                'amount' => ['required', 'integer', 'min:1', 'max:50'],
-                'category' => ['nullable', 'integer', 'min:1'],
-                'difficulty' => ['nullable', Rule::in(['easy', 'medium', 'hard'])],
-                'type' => ['nullable', Rule::in(['multiple', 'boolean'])]
-            ]);
+            $validated = $request->validated();
 
             $questions = $this->triviaService->getQuestions($validated);
             
@@ -68,12 +61,6 @@ class TriviaController extends Controller
                 'success' => true,
                 'data' => $questions
             ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Invalid parameters provided',
-                'errors' => $e->errors()
-            ], 422);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,

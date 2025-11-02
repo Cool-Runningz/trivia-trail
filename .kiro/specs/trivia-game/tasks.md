@@ -33,12 +33,12 @@
   - No game state management (handled client-side)
   - _Requirements: 2.1, 6.1_
 
-- [ ] 3. Create form request validation classes
+- [x] 3. Create form request validation classes
   - Implement QuestionsRequest for API parameter validation
   - Add server-side validation for category, difficulty, and count
   - _Requirements: 2.2, 2.3, 2.4_
 
-- [ ] 3.1 Create QuestionsRequest
+- [x] 3.1 Create QuestionsRequest
   - Validate category selection (optional)
   - Validate question count (1-50)
   - Validate difficulty level (easy, medium, hard, mixed)
