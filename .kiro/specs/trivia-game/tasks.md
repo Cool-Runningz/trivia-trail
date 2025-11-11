@@ -166,13 +166,13 @@
   - LoadingSpinner component for API calls
   - _Requirements: 3.3, 4.1, 4.2, 4.3_
 
-- [ ] 9. Add routing and navigation
+- [x] 9. Add routing and navigation
   - Define Laravel routes for game endpoints
   - Configure Inertia.js page routing
   - Implement proper authorization middleware
   - _Requirements: 6.1, 6.4, 6.5_
 
-- [ ] 9.1 Create Laravel route definitions
+- [x] 9.1 Create Laravel route definitions
   - Add API routes for categories and questions (pass-through)
   - Add game routes for setup, play, answer, and results
   - Apply auth and verified middleware
