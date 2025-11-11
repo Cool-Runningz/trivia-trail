@@ -142,9 +142,9 @@ class GameController extends Controller
      *
      * @param Game $game
      * @param AnswerRequest $request
-     * @return JsonResponse
+     * @return RedirectResponse
      */
-    public function answer(Game $game, AnswerRequest $request): JsonResponse
+    public function answer(Game $game, AnswerRequest $request): RedirectResponse
     {
         $validated = $request->validated();
         $questionIndex = $validated['question_index'];
@@ -190,27 +190,14 @@ class GameController extends Controller
             ]);
         }
         
-        // Prepare response data
-        $responseData = [
-            'is_correct' => $isCorrect,
-            'correct_answer' => $correctAnswer,
-            'points_earned' => $pointsEarned,
-            'new_score' => $game->score,
-            'is_game_completed' => $isGameCompleted,
-        ];
-        
-        // Add next question info if game is not completed
-        if (!$isGameCompleted) {
-            $nextQuestion = $game->currentQuestion();
-            $responseData['next_question'] = $nextQuestion;
-            $responseData['progress'] = [
-                'current' => $game->current_question_index + 1,
-                'total' => $game->total_questions,
-                'percentage' => round((($game->current_question_index + 1) / $game->total_questions) * 100, 1)
-            ];
+        // Redirect based on game completion status
+        if ($isGameCompleted) {
+            // Game is complete, redirect to results
+            return redirect()->route('game.results', $game);
+        } else {
+            // Continue to next question
+            return redirect()->route('game.show', $game);
         }
-        
-        return response()->json($responseData);
     }
 
     /**

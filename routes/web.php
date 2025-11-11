@@ -18,8 +18,97 @@ Route::middleware(['auth', 'verified'])->group(function () {
     
     // Game routes
     Route::prefix('game')->name('game.')->group(function () {
+        Route::get('/', function () {
+            return redirect()->route('game.setup');
+        })->name('index');
         Route::get('/setup', [GameController::class, 'setup'])->name('setup');
         Route::post('/', [GameController::class, 'store'])->name('store');
+        
+        // Test routes for UI preview (remove in production) - MUST come before /{game} routes
+        Route::get('/test/play', function () {
+            return Inertia::render('game/play', [
+                'game' => [
+                    'id' => 1,
+                    'score' => 30,
+                    'current_question_index' => 2,
+                    'total_questions' => 10,
+                    'difficulty' => 'medium',
+                    'status' => 'active',
+                ],
+                'question' => [
+                    'question' => 'What is the capital of France?',
+                    'correct_answer' => 'Paris',
+                    'incorrect_answers' => ['London', 'Berlin', 'Madrid'],
+                    'difficulty' => 'easy',
+                    'category' => 'Geography',
+                    'type' => 'multiple',
+                    'shuffled_answers' => ['Paris', 'London', 'Berlin', 'Madrid']
+                ],
+                'progress' => [
+                    'current' => 3,
+                    'total' => 10,
+                    'percentage' => 30.0
+                ]
+            ]);
+        })->name('test.play');
+        
+        Route::get('/test/results', function () {
+            return Inertia::render('game/results', [
+                'game' => [
+                    'id' => 1,
+                    'difficulty' => 'medium',
+                    'total_questions' => 5,
+                    'started_at' => '2024-01-01 10:00:00',
+                    'completed_at' => '2024-01-01 10:05:00',
+                    'time_taken_minutes' => 5,
+                ],
+                'results' => [
+                    'final_score' => 80,
+                    'correct_answers' => 4,
+                    'total_questions' => 5,
+                    'percentage_score' => 80.0,
+                    'answer_breakdown' => [
+                        [
+                            'question' => 'What is 2+2?',
+                            'selected_answer' => '4',
+                            'correct_answer' => '4',
+                            'is_correct' => true,
+                            'points_earned' => 20,
+                        ],
+                        [
+                            'question' => 'What is the capital of Spain?',
+                            'selected_answer' => 'Barcelona',
+                            'correct_answer' => 'Madrid',
+                            'is_correct' => false,
+                            'points_earned' => 0,
+                        ],
+                        [
+                            'question' => 'What year did World War II end?',
+                            'selected_answer' => '1945',
+                            'correct_answer' => '1945',
+                            'is_correct' => true,
+                            'points_earned' => 20,
+                        ],
+                        [
+                            'question' => 'What is the largest planet?',
+                            'selected_answer' => 'Jupiter',
+                            'correct_answer' => 'Jupiter',
+                            'is_correct' => true,
+                            'points_earned' => 20,
+                        ],
+                        [
+                            'question' => 'Who painted the Mona Lisa?',
+                            'selected_answer' => 'Leonardo da Vinci',
+                            'correct_answer' => 'Leonardo da Vinci',
+                            'is_correct' => true,
+                            'points_earned' => 20,
+                        ],
+                    ]
+                ]
+            ]);
+        })->name('test.results');
+        
+        // Game instance routes (MUST come after test routes)
         Route::get('/{game}', [GameController::class, 'show'])->name('show');
         Route::post('/{game}/answer', [GameController::class, 'answer'])->name('answer');
         Route::get('/{game}/results', [GameController::class, 'results'])->name('results');
