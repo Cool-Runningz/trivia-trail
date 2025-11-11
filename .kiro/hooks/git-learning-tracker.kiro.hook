@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "name": "Git Learning Tracker",
+  "description": "Analyzes the latest git commit to identify Laravel concepts used and automatically updates the learning log with key insights, concepts practiced, and files modified",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      ".git/logs/HEAD"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Analyze the latest git commit and update `docs/learning-log.md`. \n\n1. Check `git log -1 --name-status` for changed files\n2. Identify Laravel concepts used (migrations, models, controllers, requests, etc.)\n3. Add a new entry with:\n   - Date and commit message\n   - Laravel concepts practiced\n   - Key learning points\n   - Files modified\n\nFocus on learning aspects, keep it concise."
+  }
+}
