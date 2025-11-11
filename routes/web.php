@@ -19,7 +19,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Game routes
     Route::prefix('game')->name('game.')->group(function () {
         Route::get('/setup', [GameController::class, 'setup'])->name('setup');
-        Route::get('/play', [GameController::class, 'play'])->name('play');
+        Route::post('/', [GameController::class, 'store'])->name('store');
+        Route::get('/{game}', [GameController::class, 'show'])->name('show');
+        Route::post('/{game}/answer', [GameController::class, 'answer'])->name('answer');
+        Route::get('/{game}/results', [GameController::class, 'results'])->name('results');
     });
 });
 

@@ -81,7 +81,7 @@
   - Validate question exists and hasn't been answered
   - _Requirements: 3.4, 6.5_
 
-- [ ] 6. Implement GameController with hybrid state management
+- [x] 6. Implement GameController with hybrid state management
   - Create game setup, play, answer submission, and results methods
   - Integrate with OpenTriviaService to fetch questions (no storage)
   - Store questions temporarily in Game.questions JSON field
@@ -89,21 +89,21 @@
   - Add game ownership authorization
   - _Requirements: 2.1, 2.5, 3.1, 3.4, 4.1, 5.1, 6.1, 6.4, 6.5_
 
-- [ ] 6.1 Implement game setup and creation
+- [x] 6.1 Implement game setup and creation
   - Create setup() method to show game configuration page
   - Implement store() method to create new game with questions
   - Fetch questions from OpenTriviaService (no database storage)
   - Store questions temporarily in Game.questions JSON field
   - _Requirements: 2.1, 2.2, 2.3, 2.5, 3.1, 3.2_
 
-- [ ] 6.2 Implement game play and question display
+- [x] 6.2 Implement game play and question display
   - Create show() method to display current question
   - Handle game state and progress tracking in database
   - Ensure proper game ownership authorization
   - Return current question from Game.questions JSON field
   - _Requirements: 3.1, 4.1, 4.2, 6.1, 6.4, 6.5_
 
-- [ ] 6.3 Implement answer submission and validation
+- [x] 6.3 Implement answer submission and validation
   - Create answer() method to process player responses
   - Validate answers against questions stored in Game.questions
   - Create PlayerAnswer records in database
@@ -111,7 +111,7 @@
   - Handle game completion when all questions answered
   - _Requirements: 3.4, 3.5, 4.3, 4.4, 5.1, 6.2_
 
-- [ ] 6.4 Implement game results and completion
+- [x] 6.4 Implement game results and completion
   - Create results() method to show final game statistics
   - Calculate final score and percentage from PlayerAnswer records
   - Mark game as completed with completion timestamp
