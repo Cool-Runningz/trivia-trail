@@ -63,19 +63,19 @@
   - Add enum classes for GameStatus and DifficultyLevel
   - _Requirements: 2.5, 3.4, 4.5, 5.4, 6.4, 6.5_
 
-- [ ] 5. Create additional form request classes for game state
+- [x] 5. Create additional form request classes for game state
   - Implement GameStoreRequest for game creation validation
   - Implement AnswerRequest for answer submission validation
   - Add proper authorization and validation rules
   - _Requirements: 2.2, 2.3, 2.4, 3.4, 6.5_
 
-- [ ] 5.1 Create GameStoreRequest
+- [x] 5.1 Create GameStoreRequest
   - Validate category selection and game parameters
   - Validate question count and difficulty level
   - Add authorization to ensure authenticated users only
   - _Requirements: 2.2, 2.3, 2.4, 6.5_
 
-- [ ] 5.2 Create AnswerRequest
+- [x] 5.2 Create AnswerRequest
   - Validate answer submission format
   - Ensure game ownership and active status
   - Validate question exists and hasn't been answered

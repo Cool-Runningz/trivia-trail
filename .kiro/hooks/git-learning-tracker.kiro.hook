@@ -4,10 +4,7 @@
   "description": "Analyzes the latest git commit to identify Laravel concepts used and automatically updates the learning log with key insights, concepts practiced, and files modified",
   "version": "1",
   "when": {
-    "type": "fileEdited",
-    "patterns": [
-      ".git/logs/HEAD"
-    ]
+    "type": "userTriggered"
   },
   "then": {
     "type": "askAgent",
