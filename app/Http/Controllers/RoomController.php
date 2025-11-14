@@ -93,7 +93,7 @@ class RoomController extends Controller
             ];
         });
 
-        return Inertia::render('multiplayer/room', [
+        return Inertia::render('multiplayer/Room', [
             'room' => [
                 'id' => $room->id,
                 'room_code' => $room->room_code,
@@ -101,14 +101,21 @@ class RoomController extends Controller
                 'max_players' => $room->max_players,
                 'current_players' => $room->current_players,
                 'host_user_id' => $room->host_user_id,
+                'host' => [
+                    'id' => $room->host->id,
+                    'name' => $room->host->name,
+                    'email' => $room->host->email,
+                ],
                 'expires_at' => $room->expires_at->toISOString(),
+                'created_at' => $room->created_at->toISOString(),
+                'updated_at' => $room->updated_at->toISOString(),
                 'settings' => [
                     'time_per_question' => $room->settings->time_per_question,
-                    'scoring_mode' => $room->settings->scoring_mode,
                     'category_id' => $room->settings->category_id,
-                    'difficulty' => $room->settings->difficulty,
+                    'difficulty' => $room->settings->difficulty->value,
                     'total_questions' => $room->settings->total_questions,
                 ],
+                'participants' => $participants,
             ],
             'participants' => $participants,
             'isHost' => $isHost,

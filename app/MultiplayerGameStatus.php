@@ -1,5 +1,7 @@
 <?php
 
+namespace App;
+
 enum MultiplayerGameStatus: string
 {
     case WAITING = 'waiting';

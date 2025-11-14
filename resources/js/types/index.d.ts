@@ -217,3 +217,100 @@ export interface AnswerBreakdown {
     is_correct: boolean;
     points_earned: number;
 }
+
+// Multiplayer Types
+
+export type RoomStatus = 'waiting' | 'active' | 'completed' | 'cancelled';
+export type ParticipantStatus = 'joined' | 'ready' | 'playing' | 'finished' | 'disconnected';
+
+export interface RoomSettings {
+    time_per_question: number;
+    category_id?: number;
+    difficulty: DifficultyLevel;
+    total_questions: number;
+}
+
+export interface Participant {
+    id: number;
+    user: User;
+    status: ParticipantStatus;
+    score: number;
+    has_answered_current: boolean;
+    position?: number;
+    joined_at: string;
+}
+
+export interface GameRoom {
+    id: number;
+    room_code: string;
+    host_user_id: number;
+    host?: User;
+    max_players: number;
+    current_players: number;
+    status: RoomStatus;
+    settings: RoomSettings;
+    participants: Participant[];
+    expires_at: string;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface MultiplayerGameState {
+    room: GameRoom;
+    current_question?: Question;
+    current_question_index: number;
+    time_remaining: number;
+    participants: Participant[];
+    round_results?: RoundResults;
+}
+
+export interface RoundResults {
+    question: Question;
+    correct_answer: string;
+    participant_results: ParticipantResult[];
+    leaderboard: LeaderboardEntry[];
+}
+
+export interface ParticipantResult {
+    participant: Participant;
+    selected_answer?: string;
+    is_correct: boolean;
+    points_earned: number;
+    response_time_ms?: number;
+}
+
+export interface LeaderboardEntry {
+    participant: Participant;
+    score: number;
+    position: number;
+}
+
+// Multiplayer Page Props
+
+export interface LobbyPageProps {
+    rooms: GameRoom[];
+    categories: Category[];
+}
+
+export interface RoomLobbyProps {
+    room: GameRoom;
+    participants: Participant[];
+    isHost: boolean;
+    canStart: boolean;
+}
+
+export interface CreateRoomFormData {
+    category_id?: number;
+    difficulty: DifficultyLevel;
+    total_questions: number;
+    max_players: number;
+}
+
+export interface JoinRoomFormData {
+    room_code: string;
+}
+
+// Global route helper (provided by Ziggy/Laravel)
+declare global {
+    function route(name: string, params?: unknown): string;
+}

@@ -126,28 +126,28 @@
   - Validate job execution and state transitions
   - _Requirements: 5.1, 5.3, 6.1_
 
-- [ ] 5. Create frontend lobby and room management components
+- [x] 5. Create frontend lobby and room management components
   - Build lobby page with room browser and creation/join modals
   - Implement room lobby component with participant list and settings
   - Create room code input component with formatting and validation
   - Add host controls for game settings and start functionality
   - _Requirements: 1.1, 1.4, 2.1, 3.1_
 
-- [ ] 5.1 Implement lobby page with room discovery
+- [x] 5.1 Implement lobby page with room discovery
   - Create main lobby page layout with navigation
   - Build room browser component showing available public rooms
   - Implement create room modal with settings form
   - Add join room modal with room code input
   - _Requirements: 1.1, 2.1_
 
-- [ ] 5.2 Create room lobby component with participant management
+- [x] 5.2 Create room lobby component with participant management
   - Build room lobby layout showing room code and participants
   - Implement participant list with status indicators
   - Add host controls for room settings and game start
   - Create leave room functionality with confirmation
   - _Requirements: 1.4, 2.5, 3.1, 3.2_
 
-- [ ] 5.3 Build specialized room code input component
+- [x] 5.3 Build specialized room code input component
   - Create 6-character input with auto-formatting to uppercase
   - Add real-time validation and error display
   - Implement copy-to-clipboard functionality for sharing

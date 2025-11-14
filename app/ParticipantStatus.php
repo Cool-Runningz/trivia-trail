@@ -1,5 +1,7 @@
 <?php
 
+namespace App;
+
 enum ParticipantStatus: string
 {
     case JOINED = 'joined';

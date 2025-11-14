@@ -1,5 +1,7 @@
 <?php
 
+namespace App;
+
 enum RoomStatus: string
 {
     case WAITING = 'waiting';

@@ -15,7 +15,6 @@ return new class extends Migration
             $table->id();
             $table->foreignId('room_id')->constrained('game_rooms')->onDelete('cascade');
             $table->integer('time_per_question')->default(30);
-            $table->enum('scoring_mode', ['standard'])->default('standard');
             $table->integer('category_id')->nullable();
             $table->enum('difficulty', ['easy', 'medium', 'hard'])->default('medium');
             $table->integer('total_questions')->default(10);
