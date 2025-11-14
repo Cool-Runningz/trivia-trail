@@ -37,13 +37,13 @@
   - Add host privilege management and automatic host transfer logic
   - _Requirements: 1.1, 1.4, 2.1, 2.2, 3.5_
 
-- [ ] 2.1 Create room code generation and validation utilities
+- [x] 2.1 Create room code generation and validation utilities
   - Implement RoomCodeGenerator class with secure random generation
   - Add room code validation methods for format and existence checks
   - Create helper methods for code formatting and display
   - _Requirements: 1.1, 2.4_
 
-- [ ] 2.2 Build room capacity and security validation
+- [x] 2.2 Build room capacity and security validation
   - Implement room capacity checking before allowing joins
   - Add rate limiting logic for room creation
   - Create security validation for room access and modifications

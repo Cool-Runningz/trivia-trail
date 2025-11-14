@@ -364,3 +364,31 @@ $leaderboard = RoomParticipant::inRoom($roomId)
 8. **Helper Methods**: Custom methods on models for business logic
 9. **Indexes**: Speed up database queries
 10. **Foreign Keys**: Maintain data integrity between tables
+
+---
+
+# Task 2 - Implement room management services and utilities
+1. **RoomCodeGenerator** (`app/Utilities/RoomCodeGenerator.php`)
+- Generates unique 6-character alphanumeric room codes
+- Uses secure random generation excluding similar-looking characters (0, O, I, 1)
+- Validates room code format and checks for existence
+- Provides formatting utilities for display (e.g., "ABC-123")
+
+2. **RoomValidator** (`app/Utilities/RoomValidator.php`)
+- Room capacity checking before allowing joins
+- Rate limiting for room creation (max 5 rooms per hour per user)
+- Security validation for room access and modifications
+- Host privilege verification
+- Room settings validation (player count, time limits, question count)
+
+3. **RoomService** (`app/Services/RoomService.php`)
+- Complete room lifecycle management:
+   - `createRoom()` - Creates new rooms with settings and adds host as first participant
+   - `joinRoom()` - Validates and adds participants to existing rooms
+   - `leaveRoom()` - Handles participant removal with automatic host transfer
+   - `updateSettings()` - Host-only room configuration updates
+   - `cleanupRoom()` - Removes rooms and all related data
+   - `cleanupExpiredRooms()` - Batch cleanup of expired rooms
+- Participant management with status tracking
+- Automatic host transfer when host leaves during waiting phase
+- Room cancellation when host leaves during active game
