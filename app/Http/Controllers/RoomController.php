@@ -6,6 +6,7 @@ use App\Http\Requests\CreateRoomRequest;
 use App\Http\Requests\JoinRoomRequest;
 use App\Models\GameRoom;
 use App\RoomStatus;
+use App\Services\MultiplayerGameService;
 use App\Services\RoomService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -13,7 +14,8 @@ use Inertia\Inertia;
 class RoomController extends Controller
 {
     public function __construct(
-        private RoomService $roomService
+        private RoomService $roomService,
+        private MultiplayerGameService $gameService
     ) {}
 
     /**
@@ -141,13 +143,10 @@ class RoomController extends Controller
         }
 
         try {
-            // Update room status to starting
-            $room->update(['status' => RoomStatus::STARTING]);
+            // Start the multiplayer game
+            $multiplayerGame = $this->gameService->startGame($room);
 
-            // TODO: Dispatch job to start game after countdown
-            // This will be implemented in task 4.2
-
-            return redirect()->route('room.show', $room->room_code)
+            return redirect()->route('multiplayer.game.show', $room->room_code)
                 ->with('success', 'Game is starting!');
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()]);

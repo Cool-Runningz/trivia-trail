@@ -392,3 +392,62 @@ $leaderboard = RoomParticipant::inRoom($roomId)
 - Participant management with status tracking
 - Automatic host transfer when host leaves during waiting phase
 - Room cancellation when host leaves during active game
+
+---
+
+# Task 3 - Create room management controllers and routes
+
+1. **RoomController** (`app/Http/Controllers/RoomController.php`)
+   - `store()` - Creates new rooms with settings
+   - `join()` - Joins existing rooms with validation
+   - `show()` - Displays room state with polling support
+   - `start()` - Initiates games (host-only)
+   - `leave()` - Removes participants and handles cleanup
+
+2. **LobbyController** (`app/Http/Controllers/LobbyController.php`)
+   - `index()` - Displays available rooms and user's active rooms
+
+3. **Form Request Validators:**
+   - `CreateRoomRequest` - Validates room creation with settings (max_players, time_per_question, difficulty, etc.)
+   - `JoinRoomRequest` - Validates room codes with format, existence, capacity, and expiration checks
+   - `RoomSettingsRequest` - Validates settings updates with host authorization
+
+4. **Routes** (added to `routes/web.php`):
+   - `GET /lobby` → `lobby.index`
+   - `POST /multiplayer/room` → `multiplayer.room.store`
+   - `POST /multiplayer/room/join` → `multiplayer.room.join`
+   - `GET /multiplayer/room/{roomCode}` → `multiplayer.room.show`
+   - `POST /multiplayer/room/{roomCode}/start` → `multiplayer.room.start`
+   - `POST /multiplayer/room/{roomCode}/leave` → `multiplayer.room.leave`
+
+All routes are protected by auth and verified middleware, and all components have been verified to load without errors. The implementation follows Laravel best practices and integrates seamlessly with the existing RoomService.
+
+---
+
+# Task 4 Complete: Multiplayer Game Flow and Timing System
+
+### 4.1 MultiplayerGameController
+Created a comprehensive controller handling:
+
+- `show()` - Active game state with polling data, time remaining calculation, and participant answer statuses
+- `answer()` - Answer submission with timing validation, duplicate prevention, and server-side correctness checking
+- `results()` - Round and final results display with leaderboards and participant statistics
+- Helper methods for time calculations, participant statuses, and leaderboard generation
+
+### 4.2 Laravel Jobs for Automation
+Implemented four jobs for automated game progression:
+
+- **StartGameJob** - Initiates game after countdown, sets first question timer, schedules next question
+- **NextQuestionJob** - Handles automatic question progression, calculates scores, shows results, and manages game completion
+- **CalculateRoundScoresJob** - Computes scores based on difficulty and correctness, updates participant totals
+- **CleanupInactiveRoomsJob** - Maintains system health by removing expired, completed, and cancelled rooms
+
+### 4.3 MultiplayerGameService
+Built a comprehensive service layer with:
+
+- `startGame()` - Orchestrates game creation, fetches questions from API, creates game records, schedules start job
+- `validateAnswer()` - Server-side validation for question index, timing, and duplicate submissions
+- `generateLeaderboard()` - Rankings with tie-handling and proper sorting
+- `getParticipantStatistics()` - Detailed stats including accuracy, response times, and scores
+- `getRoundResults()` - Complete round data with participant results and leaderboard
+- `cancelGame()` - Graceful game cancellation with proper status updates

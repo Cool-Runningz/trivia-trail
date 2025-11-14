@@ -129,6 +129,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/{roomCode}/start', [RoomController::class, 'start'])->name('start');
             Route::post('/{roomCode}/leave', [RoomController::class, 'leave'])->name('leave');
         });
+        
+        // Game flow
+        Route::prefix('game')->name('game.')->group(function () {
+            Route::get('/{roomCode}', [\App\Http\Controllers\MultiplayerGameController::class, 'show'])->name('show');
+            Route::post('/{roomCode}/answer', [\App\Http\Controllers\MultiplayerGameController::class, 'answer'])->name('answer');
+            Route::get('/{roomCode}/results', [\App\Http\Controllers\MultiplayerGameController::class, 'results'])->name('results');
+        });
     });
 });
 

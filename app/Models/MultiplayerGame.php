@@ -44,6 +44,11 @@ class MultiplayerGame extends Model
         return $questions[$this->current_question_index] ?? null;
     }
 
+    public function currentQuestion(): ?array
+    {
+        return $this->getCurrentQuestion();
+    }
+
     public function hasMoreQuestions(): bool
     {
         $questions = $this->game->questions ?? [];

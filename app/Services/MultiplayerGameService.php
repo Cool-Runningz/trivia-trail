@@ -1,0 +1,349 @@
+<?php
+
+namespace App\Services;
+
+use App\GameStatus;
+use App\Jobs\StartGameJob;
+use App\Models\Game;
+use App\Models\GameRoom;
+use App\Models\MultiplayerGame;
+use App\Models\ParticipantAnswer;
+use App\Models\RoomParticipant;
+use App\MultiplayerGameStatus;
+use App\ParticipantStatus;
+use App\RoomStatus;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+
+class MultiplayerGameService
+{
+    public function __construct(
+        private OpenTriviaService $triviaService
+    ) {}
+
+    /**
+     * Start a multiplayer game for a room
+     *
+     * @param GameRoom $room
+     * @return MultiplayerGame
+     * @throws \Exception
+     */
+    public function startGame(GameRoom $room): MultiplayerGame
+    {
+        // Verify room is in waiting status
+        if ($room->status !== RoomStatus::Waiting) {
+            throw new \Exception('Room is not in waiting status');
+        }
+
+        // Verify there are participants
+        if ($room->participants()->count() === 0) {
+            throw new \Exception('No participants in room');
+        }
+
+        return DB::transaction(function () use ($room) {
+            // Fetch questions from OpenTriviaService
+            $questionParams = [
+                'amount' => $room->settings->total_questions,
+                'difficulty' => $room->settings->difficulty->value,
+            ];
+
+            if ($room->settings->category_id) {
+                $questionParams['category'] = $room->settings->category_id;
+            }
+
+            $questionsResponse = $this->triviaService->getQuestions($questionParams);
+
+            if (isset($questionsResponse['error']) && $questionsResponse['error']) {
+                throw new \Exception($questionsResponse['message'] ?? 'Failed to fetch questions');
+            }
+
+            if (empty($questionsResponse)) {
+                throw new \Exception('No questions available for the selected parameters');
+            }
+
+            // Create the base game record
+            $game = Game::create([
+                'user_id' => $room->host_user_id,
+                'category_id' => $room->settings->category_id,
+                'difficulty' => $room->settings->difficulty,
+                'total_questions' => count($questionsResponse),
+                'current_question_index' => 0,
+                'score' => 0,
+                'status' => GameStatus::Active,
+                'questions' => $questionsResponse,
+                'started_at' => now(),
+            ]);
+
+            // Create multiplayer game record
+            $multiplayerGame = MultiplayerGame::create([
+                'room_id' => $room->id,
+                'game_id' => $game->id,
+                'current_question_index' => 0,
+                'status' => MultiplayerGameStatus::Waiting,
+            ]);
+
+            // Update room status
+            $room->update([
+                'status' => RoomStatus::Starting,
+            ]);
+
+            // Update all participants to playing status
+            $room->participants()->update([
+                'status' => ParticipantStatus::Playing,
+            ]);
+
+            Log::info('MultiplayerGameService: Game created', [
+                'room_id' => $room->id,
+                'room_code' => $room->room_code,
+                'game_id' => $game->id,
+                'multiplayer_game_id' => $multiplayerGame->id,
+                'total_questions' => count($questionsResponse)
+            ]);
+
+            // Schedule the game to start after a countdown (e.g., 5 seconds)
+            StartGameJob::dispatch($multiplayerGame->id)
+                ->delay(now()->addSeconds(5));
+
+            return $multiplayerGame;
+        });
+    }
+
+    /**
+     * Validate answer submission
+     *
+     * @param MultiplayerGame $multiplayerGame
+     * @param RoomParticipant $participant
+     * @param int $questionIndex
+     * @param string $selectedAnswer
+     * @return array
+     */
+    public function validateAnswer(
+        MultiplayerGame $multiplayerGame,
+        RoomParticipant $participant,
+        int $questionIndex,
+        string $selectedAnswer
+    ): array {
+        // Validate question index
+        if ($questionIndex !== $multiplayerGame->current_question_index) {
+            return [
+                'valid' => false,
+                'error' => 'Invalid question index'
+            ];
+        }
+
+        // Validate game is active
+        if ($multiplayerGame->status !== MultiplayerGameStatus::Active) {
+            return [
+                'valid' => false,
+                'error' => 'Game is not active'
+            ];
+        }
+
+        // Check if time has expired
+        if (!$this->isWithinTimeLimit($multiplayerGame)) {
+            return [
+                'valid' => false,
+                'error' => 'Time has expired for this question'
+            ];
+        }
+
+        // Check if participant has already answered
+        $existingAnswer = ParticipantAnswer::where('multiplayer_game_id', $multiplayerGame->id)
+            ->where('participant_id', $participant->id)
+            ->where('question_index', $questionIndex)
+            ->exists();
+
+        if ($existingAnswer) {
+            return [
+                'valid' => false,
+                'error' => 'You have already answered this question'
+            ];
+        }
+
+        return [
+            'valid' => true
+        ];
+    }
+
+    /**
+     * Check if answer submission is within time limit
+     *
+     * @param MultiplayerGame $multiplayerGame
+     * @return bool
+     */
+    public function isWithinTimeLimit(MultiplayerGame $multiplayerGame): bool
+    {
+        if (!$multiplayerGame->question_started_at) {
+            return false;
+        }
+
+        $timePerQuestion = $multiplayerGame->room->settings->time_per_question ?? 30;
+        $elapsedSeconds = now()->diffInSeconds($multiplayerGame->question_started_at);
+
+        return $elapsedSeconds <= $timePerQuestion;
+    }
+
+    /**
+     * Calculate time remaining for current question
+     *
+     * @param MultiplayerGame $multiplayerGame
+     * @return int
+     */
+    public function calculateTimeRemaining(MultiplayerGame $multiplayerGame): int
+    {
+        if (!$multiplayerGame->question_started_at) {
+            return 0;
+        }
+
+        $timePerQuestion = $multiplayerGame->room->settings->time_per_question ?? 30;
+        $elapsedSeconds = now()->diffInSeconds($multiplayerGame->question_started_at);
+        $remaining = max(0, $timePerQuestion - $elapsedSeconds);
+
+        return (int) $remaining;
+    }
+
+    /**
+     * Generate leaderboard for a room
+     *
+     * @param GameRoom $room
+     * @return array
+     */
+    public function generateLeaderboard(GameRoom $room): array
+    {
+        $participants = $room->participants()
+            ->with('user')
+            ->orderBy('score', 'desc')
+            ->orderBy('joined_at', 'asc') // Tie-breaker: earlier join time
+            ->get();
+
+        $position = 1;
+        $previousScore = null;
+        $actualPosition = 1;
+
+        return $participants->map(function ($participant) use (&$position, &$previousScore, &$actualPosition) {
+            // Handle ties - participants with same score get same position
+            if ($previousScore !== null && $participant->score !== $previousScore) {
+                $position = $actualPosition;
+            }
+
+            $result = [
+                'position' => $position,
+                'participant_id' => $participant->id,
+                'user' => [
+                    'id' => $participant->user->id,
+                    'name' => $participant->user->name,
+                ],
+                'score' => $participant->score,
+                'status' => $participant->status->value,
+            ];
+
+            $previousScore = $participant->score;
+            $actualPosition++;
+
+            return $result;
+        })->toArray();
+    }
+
+    /**
+     * Get participant statistics for a game
+     *
+     * @param MultiplayerGame $multiplayerGame
+     * @param RoomParticipant $participant
+     * @return array
+     */
+    public function getParticipantStatistics(
+        MultiplayerGame $multiplayerGame,
+        RoomParticipant $participant
+    ): array {
+        $answers = ParticipantAnswer::where('multiplayer_game_id', $multiplayerGame->id)
+            ->where('participant_id', $participant->id)
+            ->get();
+
+        $correctAnswers = $answers->where('is_correct', true)->count();
+        $totalAnswers = $answers->count();
+        $averageResponseTime = $answers->avg('response_time_ms');
+
+        return [
+            'total_answers' => $totalAnswers,
+            'correct_answers' => $correctAnswers,
+            'incorrect_answers' => $totalAnswers - $correctAnswers,
+            'accuracy_percentage' => $totalAnswers > 0 ? round(($correctAnswers / $totalAnswers) * 100, 1) : 0,
+            'average_response_time_ms' => $averageResponseTime ? round($averageResponseTime) : null,
+            'total_score' => $participant->score,
+        ];
+    }
+
+    /**
+     * Get round results for a specific question
+     *
+     * @param MultiplayerGame $multiplayerGame
+     * @param int $questionIndex
+     * @return array
+     */
+    public function getRoundResults(MultiplayerGame $multiplayerGame, int $questionIndex): array
+    {
+        $question = $multiplayerGame->game->questions[$questionIndex];
+        $room = $multiplayerGame->room;
+
+        // Get all participant answers for this question
+        $answers = ParticipantAnswer::where('multiplayer_game_id', $multiplayerGame->id)
+            ->where('question_index', $questionIndex)
+            ->with('participant.user')
+            ->get();
+
+        $participantResults = $room->participants()->with('user')->get()->map(function ($participant) use ($answers) {
+            $answer = $answers->firstWhere('participant_id', $participant->id);
+
+            return [
+                'participant_id' => $participant->id,
+                'user' => [
+                    'id' => $participant->user->id,
+                    'name' => $participant->user->name,
+                ],
+                'score' => $participant->score,
+                'is_correct' => $answer?->is_correct ?? false,
+                'selected_answer' => $answer?->selected_answer ?? null,
+                'response_time_ms' => $answer?->response_time_ms ?? null,
+                'answered' => $answer !== null,
+            ];
+        });
+
+        return [
+            'question' => [
+                'question' => $question['question'],
+                'correct_answer' => $question['correct_answer'],
+                'all_answers' => $question['shuffled_answers'] ?? [],
+            ],
+            'participant_results' => $participantResults->toArray(),
+            'leaderboard' => $this->generateLeaderboard($room),
+        ];
+    }
+
+    /**
+     * Cancel a multiplayer game
+     *
+     * @param MultiplayerGame $multiplayerGame
+     * @return void
+     */
+    public function cancelGame(MultiplayerGame $multiplayerGame): void
+    {
+        DB::transaction(function () use ($multiplayerGame) {
+            $multiplayerGame->update([
+                'status' => MultiplayerGameStatus::Completed,
+            ]);
+
+            $multiplayerGame->room->update([
+                'status' => RoomStatus::Cancelled,
+            ]);
+
+            $multiplayerGame->room->participants()->update([
+                'status' => ParticipantStatus::Finished,
+            ]);
+
+            Log::info('MultiplayerGameService: Game cancelled', [
+                'multiplayer_game_id' => $multiplayerGame->id,
+                'room_code' => $multiplayerGame->room->room_code
+            ]);
+        });
+    }
+}
