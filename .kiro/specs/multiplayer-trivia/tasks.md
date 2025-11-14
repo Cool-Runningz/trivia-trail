@@ -1,24 +1,24 @@
 # Multiplayer Trivia Implementation Plan
 
-- [ ] 1. Set up database schema and core models
+- [x] 1. Set up database schema and core models
   - Create database migrations for game_rooms, room_participants, room_settings, multiplayer_games, and participant_answers tables
   - Implement proper indexes, foreign keys, and cascade deletes as specified in design
   - Create enum classes for room status, participant status, and scoring modes
   - _Requirements: 1.1, 1.5, 7.2_
 
-- [ ] 1.1 Create GameRoom model with relationships
+- [x] 1.1 Create GameRoom model with relationships
   - Implement GameRoom model with fillable fields and enum casting
   - Define relationships to User (host), RoomParticipant, RoomSettings, and MultiplayerGame
   - Add scopes for filtering by status and active rooms
   - _Requirements: 1.1, 1.3, 7.1_
 
-- [ ] 1.2 Create RoomParticipant model with user relationships
+- [x] 1.2 Create RoomParticipant model with user relationships
   - Implement RoomParticipant model with proper relationships
   - Add methods for score tracking and status management
   - Create scopes for participant filtering and counting
   - _Requirements: 2.1, 2.5, 4.1_
 
-- [ ] 1.3 Create supporting models (RoomSettings, MultiplayerGame, ParticipantAnswer)
+- [x] 1.3 Create supporting models (RoomSettings, MultiplayerGame, ParticipantAnswer)
   - Implement RoomSettings model for game configuration
   - Create MultiplayerGame model extending single-player game functionality
   - Build ParticipantAnswer model for tracking responses with timing

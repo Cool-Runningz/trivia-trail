@@ -1,4 +1,4 @@
-# Laravel Learning Log
+# Single Player - Laravel Learning Log
 
 This document tracks my Laravel learning journey while building the trivia game project.
 
