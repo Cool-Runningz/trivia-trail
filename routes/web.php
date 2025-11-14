@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\GameController;
+use App\Http\Controllers\LobbyController;
+use App\Http\Controllers\RoomController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -112,6 +114,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/{game}', [GameController::class, 'show'])->name('show');
         Route::post('/{game}/answer', [GameController::class, 'answer'])->name('answer');
         Route::get('/{game}/results', [GameController::class, 'results'])->name('results');
+    });
+    
+    // Multiplayer lobby (top-level for convenience)
+    Route::get('/lobby', [LobbyController::class, 'index'])->name('lobby.index');
+    
+    // Multiplayer routes
+    Route::prefix('multiplayer')->name('multiplayer.')->group(function () {
+        // Room management
+        Route::prefix('room')->name('room.')->group(function () {
+            Route::post('/', [RoomController::class, 'store'])->name('store');
+            Route::post('/join', [RoomController::class, 'join'])->name('join');
+            Route::get('/{roomCode}', [RoomController::class, 'show'])->name('show');
+            Route::post('/{roomCode}/start', [RoomController::class, 'start'])->name('start');
+            Route::post('/{roomCode}/leave', [RoomController::class, 'leave'])->name('leave');
+        });
     });
 });
 

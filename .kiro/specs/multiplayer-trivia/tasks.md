@@ -55,14 +55,14 @@
   - Test participant management and host transfer logic
   - _Requirements: 1.1, 2.1, 7.2_
 
-- [ ] 3. Create room management controllers and routes
+- [x] 3. Create room management controllers and routes
   - Implement RoomController with methods for create, join, show, start, and leave
   - Create LobbyController for room discovery and public room listing
   - Add proper route definitions with middleware for authentication
   - Implement form request validation for room operations
   - _Requirements: 1.1, 2.1, 3.1, 3.2_
 
-- [ ] 3.1 Implement RoomController with CRUD operations
+- [x] 3.1 Implement RoomController with CRUD operations
   - Create store method for room creation with settings
   - Build join method with room code validation and capacity checks
   - Implement show method for room state display with polling support
@@ -70,14 +70,14 @@
   - Create leave method for participant removal and cleanup
   - _Requirements: 1.1, 1.2, 2.1, 2.2, 3.1, 3.2_
 
-- [ ] 3.2 Create form request validation classes
+- [x] 3.2 Create form request validation classes
   - Implement CreateRoomRequest with room settings validation
   - Build JoinRoomRequest with room code format and existence validation
   - Create RoomSettingsRequest for host configuration updates
   - Add proper authorization logic in form requests
   - _Requirements: 1.2, 2.4, 3.1, 7.4_
 
-- [ ] 3.3 Set up multiplayer routing structure
+- [x] 3.3 Set up multiplayer routing structure
   - Define route groups for multiplayer functionality with proper middleware
   - Create routes for room management (lobby, create, join, show, start, leave)
   - Add route model binding for room_code parameter
