@@ -31,7 +31,7 @@ class MultiplayerGameService
     public function startGame(GameRoom $room): MultiplayerGame
     {
         // Verify room is in waiting status
-        if ($room->status !== RoomStatus::Waiting) {
+        if ($room->status !== RoomStatus::WAITING) {
             throw new \Exception('Room is not in waiting status');
         }
 
@@ -79,17 +79,17 @@ class MultiplayerGameService
                 'room_id' => $room->id,
                 'game_id' => $game->id,
                 'current_question_index' => 0,
-                'status' => MultiplayerGameStatus::Waiting,
+                'status' => MultiplayerGameStatus::WAITING,
             ]);
 
-            // Update room status
+            // Update room status to active
             $room->update([
-                'status' => RoomStatus::Starting,
+                'status' => RoomStatus::ACTIVE,
             ]);
 
             // Update all participants to playing status
             $room->participants()->update([
-                'status' => ParticipantStatus::Playing,
+                'status' => ParticipantStatus::PLAYING,
             ]);
 
             Log::info('MultiplayerGameService: Game created', [
@@ -100,9 +100,22 @@ class MultiplayerGameService
                 'total_questions' => count($questionsResponse)
             ]);
 
-            // Schedule the game to start after a countdown (e.g., 5 seconds)
-            StartGameJob::dispatch($multiplayerGame->id)
-                ->delay(now()->addSeconds(5));
+            // Start the game immediately (no countdown for now)
+            $multiplayerGame->update([
+                'status' => MultiplayerGameStatus::ACTIVE,
+                'current_question_index' => 0,
+                'question_started_at' => now(),
+            ]);
+
+            // Update room status to active
+            $room->update([
+                'status' => RoomStatus::ACTIVE,
+            ]);
+
+            Log::info('MultiplayerGameService: Game started immediately', [
+                'multiplayer_game_id' => $multiplayerGame->id,
+                'room_code' => $room->room_code
+            ]);
 
             return $multiplayerGame;
         });
@@ -132,7 +145,7 @@ class MultiplayerGameService
         }
 
         // Validate game is active
-        if ($multiplayerGame->status !== MultiplayerGameStatus::Active) {
+        if ($multiplayerGame->status !== MultiplayerGameStatus::ACTIVE) {
             return [
                 'valid' => false,
                 'error' => 'Game is not active'
@@ -329,15 +342,15 @@ class MultiplayerGameService
     {
         DB::transaction(function () use ($multiplayerGame) {
             $multiplayerGame->update([
-                'status' => MultiplayerGameStatus::Completed,
+                'status' => MultiplayerGameStatus::COMPLETED,
             ]);
 
             $multiplayerGame->room->update([
-                'status' => RoomStatus::Cancelled,
+                'status' => RoomStatus::CANCELLED,
             ]);
 
             $multiplayerGame->room->participants()->update([
-                'status' => ParticipantStatus::Finished,
+                'status' => ParticipantStatus::FINISHED,
             ]);
 
             Log::info('MultiplayerGameService: Game cancelled', [

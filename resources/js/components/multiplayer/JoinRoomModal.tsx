@@ -3,6 +3,7 @@ import { router } from '@inertiajs/react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { RoomCodeInput } from './RoomCodeInput';
+import multiplayer from '@/routes/multiplayer';
 
 interface JoinRoomModalProps {
     open: boolean;
@@ -21,7 +22,7 @@ export function JoinRoomModal({ open, onOpenChange }: JoinRoomModalProps) {
         setError('');
         
         router.post(
-            route('multiplayer.room.join'),
+            multiplayer.room.join().url,
             { room_code: roomCode },
             {
                 onSuccess: () => {

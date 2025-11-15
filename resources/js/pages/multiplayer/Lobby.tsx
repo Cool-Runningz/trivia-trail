@@ -1,23 +1,37 @@
 import { useState } from 'react';
 import { Head } from '@inertiajs/react';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Plus, LogIn, Users } from 'lucide-react';
-import { LobbyPageProps } from '@/types';
+import { type BreadcrumbItem, type LobbyPageProps } from '@/types';
 import { RoomBrowser } from '@/components/multiplayer/RoomBrowser';
 import { CreateRoomModal } from '@/components/multiplayer/CreateRoomModal';
 import { JoinRoomModal } from '@/components/multiplayer/JoinRoomModal';
+import AppLayout from '@/layouts/app-layout';
+import { dashboard } from '@/routes';
+import lobby from '@/routes/lobby';
+
+const breadcrumbs: BreadcrumbItem[] = [
+    {
+        title: 'Dashboard',
+        href: dashboard().url,
+    },
+    {
+        title: 'Multiplayer Lobby',
+        href: lobby.index().url,
+    },
+];
 
 export default function Lobby({ rooms, categories }: LobbyPageProps) {
     const [createModalOpen, setCreateModalOpen] = useState(false);
     const [joinModalOpen, setJoinModalOpen] = useState(false);
 
     return (
-        <>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Multiplayer Lobby" />
 
-            <div className="container mx-auto py-8 space-y-8">
+            <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
+                <div className="space-y-8">
                 {/* Header */}
                 <div className="space-y-2">
                     <div className="flex items-center gap-3">
@@ -86,6 +100,7 @@ export default function Lobby({ rooms, categories }: LobbyPageProps) {
 
                     <RoomBrowser rooms={rooms} />
                 </div>
+                </div>
             </div>
 
             {/* Modals */}
@@ -98,6 +113,6 @@ export default function Lobby({ rooms, categories }: LobbyPageProps) {
                 open={joinModalOpen}
                 onOpenChange={setJoinModalOpen}
             />
-        </>
+        </AppLayout>
     );
 }

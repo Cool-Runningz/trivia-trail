@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Category, CreateRoomFormData, DifficultyLevel } from '@/types';
+import multiplayer from '@/routes/multiplayer';
 
 interface CreateRoomModalProps {
     open: boolean;
@@ -21,7 +22,7 @@ export function CreateRoomModal({ open, onOpenChange, categories }: CreateRoomMo
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         
-        post(route('multiplayer.room.store'), {
+        post(multiplayer.room.store().url, {
             onSuccess: () => {
                 reset();
                 onOpenChange(false);

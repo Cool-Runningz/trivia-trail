@@ -29,7 +29,7 @@ class RoomController extends Controller
                 $request->validated()
             );
 
-            return redirect()->route('room.show', $room->room_code)
+            return redirect()->route('multiplayer.room.show', $room->room_code)
                 ->with('success', 'Room created successfully!');
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()]);
@@ -47,7 +47,7 @@ class RoomController extends Controller
                 $request->user()
             );
 
-            return redirect()->route('room.show', $room->room_code)
+            return redirect()->route('multiplayer.room.show', $room->room_code)
                 ->with('success', 'Joined room successfully!');
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()]);
@@ -153,8 +153,9 @@ class RoomController extends Controller
             // Start the multiplayer game
             $multiplayerGame = $this->gameService->startGame($room);
 
+            // Redirect directly to the game page
             return redirect()->route('multiplayer.game.show', $room->room_code)
-                ->with('success', 'Game is starting!');
+                ->with('success', 'Game started!');
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()]);
         }

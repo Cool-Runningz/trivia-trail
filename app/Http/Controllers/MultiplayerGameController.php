@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\AnswerRequest;
 use App\Models\GameRoom;
+use Illuminate\Http\Request;
 use App\Models\MultiplayerGame;
 use App\Models\ParticipantAnswer;
 use App\Models\RoomParticipant;
@@ -65,26 +65,27 @@ class MultiplayerGameController extends Controller
             ->where('question_index', $multiplayerGame->current_question_index)
             ->exists();
 
-        return Inertia::render('multiplayer/game/play', [
-            'room' => [
-                'id' => $room->id,
-                'room_code' => $room->room_code,
-                'status' => $room->status->value,
-            ],
-            'game' => [
-                'id' => $multiplayerGame->id,
+        return Inertia::render('multiplayer/Game', [
+            'gameState' => [
+                'room' => [
+                    'id' => $room->id,
+                    'room_code' => $room->room_code,
+                    'status' => $room->status->value,
+                    'host_user_id' => $room->host_user_id,
+                    'max_players' => $room->max_players,
+                    'current_players' => $room->current_players,
+                    'settings' => [
+                        'time_per_question' => $room->settings->time_per_question,
+                        'category_id' => $room->settings->category_id,
+                        'difficulty' => $room->settings->difficulty->value,
+                        'total_questions' => $room->settings->total_questions,
+                    ],
+                ],
+                'current_question' => $currentQuestion,
                 'current_question_index' => $multiplayerGame->current_question_index,
-                'total_questions' => $multiplayerGame->game->total_questions,
-                'status' => $multiplayerGame->status->value,
-            ],
-            'question' => $currentQuestion,
-            'timeRemaining' => $timeRemaining,
-            'participants' => $participantStatuses,
-            'hasAnswered' => $hasAnswered,
-            'progress' => [
-                'current' => $multiplayerGame->current_question_index + 1,
-                'total' => $multiplayerGame->game->total_questions,
-                'percentage' => round((($multiplayerGame->current_question_index + 1) / $multiplayerGame->game->total_questions) * 100, 1),
+                'time_remaining' => $timeRemaining,
+                'participants' => $participantStatuses,
+                'round_results' => null, // Will be populated when showing results
             ],
         ]);
     }
@@ -93,10 +94,10 @@ class MultiplayerGameController extends Controller
      * Submit an answer with timing validation
      *
      * @param string $roomCode
-     * @param AnswerRequest $request
+     * @param Request $request
      * @return JsonResponse|RedirectResponse
      */
-    public function answer(string $roomCode, AnswerRequest $request): JsonResponse|RedirectResponse
+    public function answer(string $roomCode, Request $request): JsonResponse|RedirectResponse
     {
         $room = GameRoom::where('room_code', $roomCode)
             ->with(['multiplayerGame'])
@@ -114,7 +115,10 @@ class MultiplayerGameController extends Controller
             ], 400);
         }
 
-        $validated = $request->validated();
+        $validated = $request->validate([
+            'selected_answer' => ['required', 'string', 'max:500'],
+            'question_index' => ['required', 'integer', 'min:0'],
+        ]);
         $questionIndex = $validated['question_index'];
         $selectedAnswer = $validated['selected_answer'];
 

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Users, Clock, Trophy } from 'lucide-react';
 import { GameRoom } from '@/types';
 import { cn } from '@/lib/utils';
+import multiplayer from '@/routes/multiplayer';
 
 interface RoomBrowserProps {
     rooms: GameRoom[];
@@ -90,7 +91,7 @@ function RoomCard({ room }: { room: GameRoom }) {
 
                 {isJoinable ? (
                     <Button asChild className="w-full">
-                        <Link href={route('multiplayer.room.show', room.room_code)}>
+                        <Link href={multiplayer.room.show(room.room_code).url}>
                             Join Room
                         </Link>
                     </Button>

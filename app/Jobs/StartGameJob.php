@@ -39,7 +39,7 @@ class StartGameJob implements ShouldQueue
         }
 
         // Verify game is still in waiting status
-        if ($multiplayerGame->status !== MultiplayerGameStatus::Waiting) {
+        if ($multiplayerGame->status !== MultiplayerGameStatus::WAITING) {
             Log::info('StartGameJob: Game already started or completed', [
                 'multiplayer_game_id' => $this->multiplayerGameId,
                 'status' => $multiplayerGame->status->value
@@ -49,14 +49,14 @@ class StartGameJob implements ShouldQueue
 
         // Start the first question
         $multiplayerGame->update([
-            'status' => MultiplayerGameStatus::Active,
+            'status' => MultiplayerGameStatus::ACTIVE,
             'current_question_index' => 0,
             'question_started_at' => now(),
         ]);
 
         // Update room status
         $multiplayerGame->room->update([
-            'status' => RoomStatus::Active,
+            'status' => RoomStatus::ACTIVE,
         ]);
 
         Log::info('StartGameJob: Game started', [

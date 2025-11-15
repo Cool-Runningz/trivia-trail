@@ -4,3 +4,8 @@ export { CreateRoomModal } from './CreateRoomModal';
 export { JoinRoomModal } from './JoinRoomModal';
 export { ParticipantList } from './ParticipantList';
 export { RoomSettingsPanel } from './RoomSettingsPanel';
+export { MultiplayerQuestion } from './MultiplayerQuestion';
+export { RoundResults } from './RoundResults';
+export { FinalStandings } from './FinalStandings';
+export { ConnectionStatus, ConnectionIndicator } from './ConnectionStatus';
+export { MultiplayerErrorBoundary, useErrorHandler } from './ErrorBoundary';

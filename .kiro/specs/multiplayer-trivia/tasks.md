@@ -161,35 +161,35 @@
   - Validate error handling and user feedback
   - _Requirements: 1.1, 2.1, 3.1_
 
-- [ ] 6. Implement real-time polling and game components
+- [x] 6. Implement real-time polling and game components
   - Create polling hooks with dynamic intervals based on game state
   - Build multiplayer question component with shared timer and answer status
   - Implement round results component with leaderboard display
   - Add connection status handling and error recovery
   - _Requirements: 4.1, 4.2, 4.3, 5.1, 5.4, 8.1, 8.2_
 
-- [ ] 6.1 Create polling hooks for real-time updates
+- [x] 6.1 Create polling hooks for real-time updates
   - Implement useRoomPolling hook with dynamic intervals
   - Build connection status tracking and error handling
   - Add automatic retry logic with exponential backoff
   - Create polling optimization based on game phase
   - _Requirements: 4.1, 4.2, 8.1, 8.2_
 
-- [ ] 6.2 Build multiplayer question component with timer
+- [x] 6.2 Build multiplayer question component with timer
   - Create question display with shared 30-second countdown timer
   - Implement live answer status indicators for all participants
   - Add answer submission with immediate status updates
   - Build timer synchronization with server-side calculation
   - _Requirements: 4.3, 5.1, 5.2, 5.4_
 
-- [ ] 6.3 Implement round results and leaderboard components
+- [x] 6.3 Implement round results and leaderboard components
   - Create round results display showing correct answers and score changes
   - Build leaderboard component with participant rankings
   - Add dramatic reveal animations for correct/incorrect answers
   - Implement automatic progression to next question or final results
   - _Requirements: 6.1, 6.2, 6.3, 6.4_
 
-- [ ] 6.4 Add connection handling and error recovery
+- [x] 6.4 Add connection handling and error recovery
   - Implement connection status indicators in UI
   - Build automatic reconnection logic for network issues
   - Add graceful degradation during polling failures
