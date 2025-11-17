@@ -9,3 +9,5 @@ export { RoundResults } from './RoundResults';
 export { FinalStandings } from './FinalStandings';
 export { ConnectionStatus, ConnectionIndicator } from './ConnectionStatus';
 export { MultiplayerErrorBoundary, useErrorHandler } from './ErrorBoundary';
+export { CancelGameButton } from './CancelGameButton';
+export { NextQuestionButton } from './NextQuestionButton';

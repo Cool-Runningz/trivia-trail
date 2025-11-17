@@ -8,6 +8,7 @@ use App\Http\Requests\GameStoreRequest;
 use App\Models\Game;
 use App\Models\PlayerAnswer;
 use App\Services\OpenTriviaService;
+use App\Utilities\GameUtilities;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
@@ -153,17 +154,10 @@ class GameController extends Controller
         // Get the question from the game's questions array
         $question = $game->questions[$questionIndex];
         $correctAnswer = $question['correct_answer'];
-        $isCorrect = $selectedAnswer === $correctAnswer;
+        $isCorrect = GameUtilities::isAnswerCorrect($selectedAnswer, $correctAnswer);
         
-        // Calculate points based on difficulty
-        $pointsEarned = 0;
-        if ($isCorrect) {
-            $pointsEarned = match ($game->difficulty) {
-                \App\DifficultyLevel::Easy => 10,
-                \App\DifficultyLevel::Medium => 20,
-                \App\DifficultyLevel::Hard => 30,
-            };
-        }
+        // Calculate points based on difficulty using shared utility
+        $pointsEarned = GameUtilities::calculatePoints($game->difficulty, $isCorrect);
         
         // Create PlayerAnswer record
         PlayerAnswer::create([

@@ -89,7 +89,6 @@ export default function Dashboard() {
                                 <div className="flex-1">
                                     <div className="flex items-center gap-2">
                                         <CardTitle className="text-2xl">Multiplayer</CardTitle>
-                                        <Badge variant="secondary" className="text-xs">New!</Badge>
                                     </div>
                                     <CardDescription>Compete with friends</CardDescription>
                                 </div>

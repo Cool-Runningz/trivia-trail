@@ -62,7 +62,8 @@ class RoomController extends Controller
         $room = $this->roomService->getRoomByCode($roomCode);
 
         if (!$room) {
-            abort(404, 'Room not found');
+            return redirect()->route('lobby.index')
+                ->with('info', 'This room has been cancelled or no longer exists.');
         }
 
         // Check if user is a participant
@@ -177,6 +178,32 @@ class RoomController extends Controller
 
             return redirect()->route('lobby.index')
                 ->with('success', 'You have left the room.');
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Cancel/delete the room (host only).
+     */
+    public function destroy(Request $request, string $roomCode)
+    {
+        $room = $this->roomService->getRoomByCode($roomCode);
+
+        if (!$room) {
+            abort(404, 'Room not found');
+        }
+
+        // Verify user is the host
+        if ($room->host_user_id !== $request->user()->id) {
+            return back()->withErrors(['error' => 'Only the host can cancel the game.']);
+        }
+
+        try {
+            $this->roomService->cleanupRoom($room);
+
+            return redirect()->route('lobby.index')
+                ->with('success', 'Game cancelled and room deleted.');
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()]);
         }

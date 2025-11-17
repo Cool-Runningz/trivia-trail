@@ -250,18 +250,27 @@ export interface GameRoom {
     status: RoomStatus;
     settings: RoomSettings;
     participants: Participant[];
+    is_participant?: boolean;
+    is_host?: boolean;
     expires_at: string;
     created_at: string;
     updated_at: string;
 }
 
+export type MultiplayerGameStatus = 'waiting' | 'active' | 'showing_results' | 'completed';
+
 export interface MultiplayerGameState {
     room: GameRoom;
+    game_status?: MultiplayerGameStatus;
     current_question?: Question;
     current_question_index: number;
     time_remaining: number;
     participants: Participant[];
     round_results?: RoundResults;
+    all_players_answered?: boolean;
+    current_user_has_answered?: boolean;
+    is_ready_for_next?: boolean;
+    ready_since?: string | null;
 }
 
 export interface RoundResults {
@@ -289,6 +298,7 @@ export interface LeaderboardEntry {
 
 export interface LobbyPageProps {
     rooms: GameRoom[];
+    activeGames: GameRoom[];
     categories: Category[];
 }
 

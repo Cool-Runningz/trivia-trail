@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
+use App\DifficultyLevel;
 use App\GameStatus;
-use App\Jobs\StartGameJob;
 use App\Models\Game;
 use App\Models\GameRoom;
 use App\Models\MultiplayerGame;
@@ -163,7 +163,7 @@ class MultiplayerGameService
         // Check if participant has already answered
         $existingAnswer = ParticipantAnswer::where('multiplayer_game_id', $multiplayerGame->id)
             ->where('participant_id', $participant->id)
-            ->where('question_index', $questionIndex)
+            ->where('question_id', $questionIndex)
             ->exists();
 
         if ($existingAnswer) {
@@ -191,7 +191,7 @@ class MultiplayerGameService
         }
 
         $timePerQuestion = $multiplayerGame->room->settings->time_per_question ?? 30;
-        $elapsedSeconds = now()->diffInSeconds($multiplayerGame->question_started_at);
+        $elapsedSeconds = $multiplayerGame->question_started_at->diffInSeconds(now());
 
         return $elapsedSeconds <= $timePerQuestion;
     }
@@ -209,7 +209,7 @@ class MultiplayerGameService
         }
 
         $timePerQuestion = $multiplayerGame->room->settings->time_per_question ?? 30;
-        $elapsedSeconds = now()->diffInSeconds($multiplayerGame->question_started_at);
+        $elapsedSeconds = $multiplayerGame->question_started_at->diffInSeconds(now());
         $remaining = max(0, $timePerQuestion - $elapsedSeconds);
 
         return (int) $remaining;
@@ -300,7 +300,7 @@ class MultiplayerGameService
 
         // Get all participant answers for this question
         $answers = ParticipantAnswer::where('multiplayer_game_id', $multiplayerGame->id)
-            ->where('question_index', $questionIndex)
+            ->where('question_id', $questionIndex)
             ->with('participant.user')
             ->get();
 
@@ -330,6 +330,142 @@ class MultiplayerGameService
             'participant_results' => $participantResults->toArray(),
             'leaderboard' => $this->generateLeaderboard($room),
         ];
+    }
+
+    /**
+     * Check if all active participants have answered the current question
+     *
+     * @param MultiplayerGame $multiplayerGame
+     * @return bool
+     */
+    public function allParticipantsAnswered(MultiplayerGame $multiplayerGame): bool
+    {
+        $room = $multiplayerGame->room;
+        $currentQuestionIndex = $multiplayerGame->current_question_index;
+
+        // Count active participants with PLAYING status
+        $activeParticipantCount = $room->participants()
+            ->where('status', ParticipantStatus::PLAYING)
+            ->count();
+
+        // Handle edge case of zero active participants
+        if ($activeParticipantCount === 0) {
+            return false;
+        }
+
+        // Count ParticipantAnswer records for current question
+        $answerCount = ParticipantAnswer::where('multiplayer_game_id', $multiplayerGame->id)
+            ->where('question_id', $currentQuestionIndex)
+            ->count();
+
+        // Return true only if answer count equals or exceeds active participant count
+        return $answerCount >= $activeParticipantCount;
+    }
+
+    /**
+     * Check if current user has answered the current question
+     *
+     * @param MultiplayerGame $multiplayerGame
+     * @param int $userId
+     * @return bool
+     */
+    public function currentUserHasAnswered(MultiplayerGame $multiplayerGame, int $userId): bool
+    {
+        $participant = $multiplayerGame->room->participants()
+            ->where('user_id', $userId)
+            ->first();
+
+        if (!$participant) {
+            return false;
+        }
+
+        return ParticipantAnswer::where('multiplayer_game_id', $multiplayerGame->id)
+            ->where('participant_id', $participant->id)
+            ->where('question_id', $multiplayerGame->current_question_index)
+            ->exists();
+    }
+
+    /**
+     * Calculate scores for current question (synchronous)
+     *
+     * @param MultiplayerGame $multiplayerGame
+     * @return void
+     */
+    public function calculateRoundScores(MultiplayerGame $multiplayerGame): void
+    {
+        $currentQuestionIndex = $multiplayerGame->current_question_index;
+        $difficulty = $multiplayerGame->room->settings->difficulty;
+
+        $pointsForCorrect = match($difficulty) {
+            DifficultyLevel::Easy => 10,
+            DifficultyLevel::Medium => 20,
+            DifficultyLevel::Hard => 30,
+        };
+
+        $answers = ParticipantAnswer::where('multiplayer_game_id', $multiplayerGame->id)
+            ->where('question_id', $currentQuestionIndex)
+            ->with('participant')
+            ->get();
+
+        foreach ($answers as $answer) {
+            if ($answer->is_correct) {
+                $answer->participant->addScore($pointsForCorrect);
+            }
+        }
+
+        Log::info('MultiplayerGameService: Round scores calculated', [
+            'multiplayer_game_id' => $multiplayerGame->id,
+            'question_index' => $currentQuestionIndex,
+            'points_awarded' => $pointsForCorrect,
+            'answers_processed' => $answers->count()
+        ]);
+    }
+
+    /**
+     * Advance to next question or complete game (synchronous)
+     *
+     * @param MultiplayerGame $multiplayerGame
+     * @return void
+     */
+    public function advanceToNextQuestion(MultiplayerGame $multiplayerGame): void
+    {
+        // Calculate scores for current question
+        $this->calculateRoundScores($multiplayerGame);
+
+        // Check if there are more questions
+        $nextIndex = $multiplayerGame->current_question_index + 1;
+        $totalQuestions = $multiplayerGame->game->total_questions;
+
+        if ($nextIndex >= $totalQuestions) {
+            // Complete the game
+            $multiplayerGame->update([
+                'status' => MultiplayerGameStatus::COMPLETED,
+            ]);
+
+            $multiplayerGame->room->update([
+                'status' => RoomStatus::COMPLETED,
+            ]);
+
+            Log::info('MultiplayerGameService: Game completed', [
+                'multiplayer_game_id' => $multiplayerGame->id,
+                'room_code' => $multiplayerGame->room->room_code,
+                'final_question_index' => $multiplayerGame->current_question_index
+            ]);
+
+            return;
+        }
+
+        // Move to next question
+        $multiplayerGame->update([
+            'current_question_index' => $nextIndex,
+            'question_started_at' => now(),
+        ]);
+
+        Log::info('MultiplayerGameService: Advanced to next question', [
+            'multiplayer_game_id' => $multiplayerGame->id,
+            'room_code' => $multiplayerGame->room->room_code,
+            'new_question_index' => $nextIndex
+        ]);
     }
 
     /**

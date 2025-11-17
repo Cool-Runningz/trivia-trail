@@ -1,12 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { router } from '@inertiajs/react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
-import { CheckCircle2, Clock, Users } from 'lucide-react';
-import { type Question, type Participant } from '@/types';
+import { CheckCircle2, Clock } from 'lucide-react';
+import { type Question } from '@/types';
 import multiplayer from '@/routes/multiplayer';
+import { NextQuestionButton } from './NextQuestionButton';
 
 interface MultiplayerQuestionProps {
     roomCode: string;
@@ -14,7 +13,11 @@ interface MultiplayerQuestionProps {
     questionNumber: number;
     totalQuestions: number;
     timeRemaining: number;
-    participants: Participant[];
+    allPlayersAnswered: boolean;
+    currentUserHasAnswered: boolean;
+    isReadyForNext: boolean;
+    readySince: string | null;
+    isHost: boolean;
     onAnswerSubmit?: (answer: string) => void;
     disabled?: boolean;
 }
@@ -25,16 +28,17 @@ export function MultiplayerQuestion({
     questionNumber,
     totalQuestions,
     timeRemaining,
-    participants,
+    allPlayersAnswered,
+    currentUserHasAnswered,
+    isReadyForNext,
+    readySince,
+    isHost,
     onAnswerSubmit,
     disabled = false,
 }: MultiplayerQuestionProps) {
     const [selectedAnswer, setSelectedAnswer] = useState<string>('');
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [hasSubmitted, setHasSubmitted] = useState(false);
-
-    // Calculate timer percentage for progress bar
-    const timerPercentage = (timeRemaining / 30) * 100;
+    const timeExpired = timeRemaining <= 0;
     
     // Get timer color based on remaining time
     const getTimerColor = () => {
@@ -43,20 +47,15 @@ export function MultiplayerQuestion({
         return 'text-red-600';
     };
 
-    // Count participants who have answered
-    const answeredCount = participants.filter(p => p.has_answered_current).length;
-    const totalParticipants = participants.length;
-
     const handleAnswerSelect = (answer: string) => {
-        if (disabled || hasSubmitted || isSubmitting) return;
+        if (disabled || currentUserHasAnswered || isSubmitting || timeExpired) return;
         setSelectedAnswer(answer);
     };
 
     const handleSubmit = () => {
-        if (!selectedAnswer || hasSubmitted || isSubmitting) return;
+        if (!selectedAnswer || currentUserHasAnswered || isSubmitting || timeExpired) return;
         
         setIsSubmitting(true);
-        setHasSubmitted(true);
 
         router.post(
             multiplayer.game.answer(roomCode).url,
@@ -70,7 +69,6 @@ export function MultiplayerQuestion({
                 },
                 onError: () => {
                     setIsSubmitting(false);
-                    setHasSubmitted(false);
                 },
                 onFinish: () => {
                     setIsSubmitting(false);
@@ -79,22 +77,10 @@ export function MultiplayerQuestion({
         );
     };
 
-    // Reset state when question changes
-    useEffect(() => {
-        // Use a ref to track if this is the initial mount
-        const resetState = () => {
-            setSelectedAnswer('');
-            setHasSubmitted(false);
-            setIsSubmitting(false);
-        };
-        
-        resetState();
-    }, [questionNumber]);
-
     const getAnswerButtonClass = (answer: string) => {
         let baseClass = "w-full rounded-lg border p-4 text-left transition-all";
         
-        if (disabled || hasSubmitted) {
+        if (disabled || currentUserHasAnswered || timeExpired) {
             baseClass += " cursor-not-allowed opacity-50";
         } else {
             baseClass += " hover:bg-accent hover:text-accent-foreground cursor-pointer";
@@ -126,47 +112,13 @@ export function MultiplayerQuestion({
             {/* Timer and Status Bar */}
             <Card>
                 <CardContent className="pt-6">
-                    <div className="space-y-4">
-                        {/* Timer Display */}
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <Clock className={`h-5 w-5 ${getTimerColor()}`} />
-                                <span className={`text-2xl font-bold ${getTimerColor()}`}>
-                                    {timeRemaining}s
-                                </span>
-                                <span className="text-sm text-muted-foreground">remaining</span>
-                            </div>
-                            
-                            {/* Answer Status */}
-                            <div className="flex items-center gap-2">
-                                <Users className="h-4 w-4 text-muted-foreground" />
-                                <span className="text-sm font-medium">
-                                    {answeredCount} / {totalParticipants}
-                                </span>
-                                <span className="text-sm text-muted-foreground">answered</span>
-                            </div>
-                        </div>
-
-                        {/* Timer Progress Bar */}
-                        <Progress 
-                            value={timerPercentage} 
-                            className="h-2"
-                        />
-
-                        {/* Participant Answer Status */}
-                        <div className="flex flex-wrap gap-2">
-                            {participants.map((participant) => (
-                                <Badge
-                                    key={participant.id}
-                                    variant={participant.has_answered_current ? "default" : "outline"}
-                                    className="gap-1"
-                                >
-                                    {participant.has_answered_current && (
-                                        <CheckCircle2 className="h-3 w-3" />
-                                    )}
-                                    {participant.user.name}
-                                </Badge>
-                            ))}
+                    <div className="flex items-center justify-center">
+                        <div className="flex items-center gap-2">
+                            <Clock className={`h-5 w-5 ${getTimerColor()}`} />
+                            <span className={`text-2xl font-bold ${getTimerColor()}`}>
+                                {timeRemaining}s
+                            </span>
+                            <span className="text-sm text-muted-foreground">remaining</span>
                         </div>
                     </div>
                 </CardContent>
@@ -199,7 +151,7 @@ export function MultiplayerQuestion({
                                     type="button"
                                     onClick={() => handleAnswerSelect(answer)}
                                     className={getAnswerButtonClass(answer)}
-                                    disabled={disabled || hasSubmitted || isSubmitting}
+                                    disabled={disabled || currentUserHasAnswered || isSubmitting || timeExpired}
                                 >
                                     <div className="flex items-center gap-3">
                                         <div className={getAnswerIndicatorClass(answer)}>
@@ -214,26 +166,50 @@ export function MultiplayerQuestion({
                             ))}
                         </div>
 
-                        {/* Submit Button */}
-                        <div className="flex justify-between items-center pt-4">
-                            {hasSubmitted ? (
-                                <div className="flex items-center gap-2 text-green-600">
+                        {/* Submit Button and Status Messages */}
+                        <div className="pt-4">
+                            {currentUserHasAnswered && !isReadyForNext && (
+                                <div className="flex items-center gap-2 text-green-600 justify-center">
                                     <CheckCircle2 className="h-5 w-5" />
                                     <span className="font-medium">Answer submitted! Waiting for others...</span>
                                 </div>
-                            ) : (
-                                <>
+                            )}
+
+                            {allPlayersAnswered && !isHost && (
+                                <div className="flex items-center gap-2 text-blue-600 justify-center">
+                                    <CheckCircle2 className="h-5 w-5" />
+                                    <span className="font-medium">All players answered! Waiting for host...</span>
+                                </div>
+                            )}
+
+                            {timeExpired && !allPlayersAnswered && !isHost && (
+                                <div className="flex items-center gap-2 text-orange-600 justify-center">
+                                    <Clock className="h-5 w-5" />
+                                    <span className="font-medium">Time's up! Waiting for host...</span>
+                                </div>
+                            )}
+
+                            {isReadyForNext && isHost && (
+                                <NextQuestionButton 
+                                    roomCode={roomCode}
+                                    readySince={readySince}
+                                    allPlayersAnswered={allPlayersAnswered}
+                                />
+                            )}
+
+                            {!currentUserHasAnswered && !timeExpired && (
+                                <div className="flex justify-between items-center">
                                     <div className="text-sm text-muted-foreground">
                                         {selectedAnswer ? 'Click submit to lock in your answer' : 'Select an answer'}
                                     </div>
                                     <Button
                                         onClick={handleSubmit}
-                                        disabled={!selectedAnswer || hasSubmitted || isSubmitting || disabled}
+                                        disabled={!selectedAnswer || currentUserHasAnswered || isSubmitting || disabled || timeExpired}
                                         className="min-w-[120px]"
                                     >
                                         {isSubmitting ? 'Submitting...' : 'Submit Answer'}
                                     </Button>
-                                </>
+                                </div>
                             )}
                         </div>
                     </div>

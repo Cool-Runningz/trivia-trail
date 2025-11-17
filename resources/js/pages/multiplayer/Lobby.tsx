@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Head } from '@inertiajs/react';
+import { useState, useEffect } from 'react';
+import { Head, usePage } from '@inertiajs/react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Plus, LogIn, Users } from 'lucide-react';
@@ -10,6 +10,7 @@ import { JoinRoomModal } from '@/components/multiplayer/JoinRoomModal';
 import AppLayout from '@/layouts/app-layout';
 import { dashboard } from '@/routes';
 import lobby from '@/routes/lobby';
+import { toast } from 'sonner';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -22,9 +23,23 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function Lobby({ rooms, categories }: LobbyPageProps) {
+export default function Lobby({ rooms, activeGames, categories }: LobbyPageProps) {
     const [createModalOpen, setCreateModalOpen] = useState(false);
     const [joinModalOpen, setJoinModalOpen] = useState(false);
+    const { flash } = usePage<any>().props;
+
+    // Show toast notifications for flash messages
+    useEffect(() => {
+        if (flash?.success) {
+            toast.success(flash.success);
+        }
+        if (flash?.info) {
+            toast.info(flash.info);
+        }
+        if (flash?.error) {
+            toast.error(flash.error);
+        }
+    }, [flash]);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -84,22 +99,40 @@ export default function Lobby({ rooms, categories }: LobbyPageProps) {
                     </Card>
                 </div>
 
-                <Separator />
+                {/* Your Active Games */}
+                {activeGames && activeGames.length > 0 && (
+                    <>
+                        <Separator />
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h2 className="text-2xl font-semibold tracking-tight">Your Active Games</h2>
+                                    <p className="text-sm text-muted-foreground">
+                                        {activeGames.length} {activeGames.length === 1 ? 'game' : 'games'} in progress
+                                    </p>
+                                </div>
+                            </div>
 
-                {/* Available Rooms */}
-                <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h2 className="text-2xl font-semibold tracking-tight">Available Rooms</h2>
-                            <p className="text-sm text-muted-foreground">
-                                {rooms.length} {rooms.length === 1 ? 'room' : 'rooms'} waiting for players
-                            </p>
+                            <RoomBrowser rooms={activeGames} />
                         </div>
-                     
-                    </div>
+                    </>
+                )}
 
-                    <RoomBrowser rooms={rooms} />
-                </div>
+                {/* Info Card */}
+                {(!activeGames || activeGames.length === 0) && (
+                    <>
+                        <Separator />
+                        <Card className="bg-muted/50">
+                            <CardContent className="pt-6">
+                                <div className="text-center space-y-2">
+                                    <p className="text-sm text-muted-foreground">
+                                        All rooms are private. Create a new room or join an existing one using a room code.
+                                    </p>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </>
+                )}
                 </div>
             </div>
 

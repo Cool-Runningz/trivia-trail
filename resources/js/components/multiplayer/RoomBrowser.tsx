@@ -48,14 +48,31 @@ function RoomCard({ room }: { room: GameRoom }) {
         cancelled: 'bg-red-500/10 text-red-500 border-red-500/20',
     };
 
-    const isJoinable = room.status === 'waiting' && room.current_players < room.max_players;
+    const isParticipant = room.is_participant;
+    const isHost = room.is_host;
+    const isJoinable = room.status === 'waiting' && room.current_players < room.max_players && !isParticipant;
 
     return (
-        <Card className={cn(!isJoinable && 'opacity-60')}>
+        <Card className={cn(
+            !isJoinable && !isParticipant && 'opacity-60',
+            isParticipant && 'border-primary'
+        )}>
             <CardHeader>
                 <div className="flex items-start justify-between">
                     <div className="space-y-1">
-                        <CardTitle className="text-lg font-mono">{room.room_code}</CardTitle>
+                        <div className="flex items-center gap-2">
+                            <CardTitle className="text-lg font-mono">{room.room_code}</CardTitle>
+                            {isHost && (
+                                <Badge variant="default" className="text-xs">
+                                    Host
+                                </Badge>
+                            )}
+                            {isParticipant && !isHost && (
+                                <Badge variant="secondary" className="text-xs">
+                                    Joined
+                                </Badge>
+                            )}
+                        </div>
                         <CardDescription>
                             Hosted by {room.host?.name || 'Unknown'}
                         </CardDescription>
@@ -89,8 +106,22 @@ function RoomCard({ room }: { room: GameRoom }) {
                     </Badge>
                 </div>
 
-                {isJoinable ? (
+                {isParticipant ? (
                     <Button asChild className="w-full">
+                        <Link href={
+                            room.status === 'active' 
+                                ? multiplayer.game.show(room.room_code).url 
+                                : multiplayer.room.show(room.room_code).url
+                        }>
+                            {room.status === 'active' 
+                                ? 'Continue Game' 
+                                : isHost 
+                                    ? 'Go to Your Room' 
+                                    : 'Rejoin Room'}
+                        </Link>
+                    </Button>
+                ) : isJoinable ? (
+                    <Button asChild className="w-full" variant="outline">
                         <Link href={multiplayer.room.show(room.room_code).url}>
                             Join Room
                         </Link>

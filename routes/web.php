@@ -128,12 +128,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/{roomCode}', [RoomController::class, 'show'])->name('show');
             Route::post('/{roomCode}/start', [RoomController::class, 'start'])->name('start');
             Route::post('/{roomCode}/leave', [RoomController::class, 'leave'])->name('leave');
+            Route::delete('/{roomCode}', [RoomController::class, 'destroy'])->name('destroy');
         });
         
         // Game flow
         Route::prefix('game')->name('game.')->group(function () {
             Route::get('/{roomCode}', [\App\Http\Controllers\MultiplayerGameController::class, 'show'])->name('show');
             Route::post('/{roomCode}/answer', [\App\Http\Controllers\MultiplayerGameController::class, 'answer'])->name('answer');
+            Route::post('/{roomCode}/next', [\App\Http\Controllers\MultiplayerGameController::class, 'nextQuestion'])->name('next');
             Route::get('/{roomCode}/results', [\App\Http\Controllers\MultiplayerGameController::class, 'results'])->name('results');
         });
     });

@@ -39,21 +39,41 @@ export function FinalStandings({
         }
     };
 
-    const getPositionBadge = (position: number) => {
+    const getPositionBadge = (position: number, score: number) => {
+        // Check if this score is tied with others at the same position
+        const playersAtPosition = leaderboard.filter(e => e.score === score);
+        const isTiedPosition = playersAtPosition.length > 1;
+        
+        const positionText = isTiedPosition ? `Tied ${position}${getOrdinalSuffix(position)}` : `${position}${getOrdinalSuffix(position)} Place`;
+        
         switch (position) {
             case 1:
-                return <Badge className="bg-yellow-500 hover:bg-yellow-600">1st Place</Badge>;
+                return <Badge className="bg-yellow-500 hover:bg-yellow-600">{positionText}</Badge>;
             case 2:
-                return <Badge className="bg-gray-400 hover:bg-gray-500">2nd Place</Badge>;
+                return <Badge className="bg-gray-400 hover:bg-gray-500">{positionText}</Badge>;
             case 3:
-                return <Badge className="bg-orange-500 hover:bg-orange-600">3rd Place</Badge>;
+                return <Badge className="bg-orange-500 hover:bg-orange-600">{positionText}</Badge>;
             default:
-                return <Badge variant="outline">{position}th Place</Badge>;
+                return <Badge variant="outline">{positionText}</Badge>;
         }
+    };
+    
+    const getOrdinalSuffix = (num: number) => {
+        const j = num % 10;
+        const k = num % 100;
+        if (j === 1 && k !== 11) return 'st';
+        if (j === 2 && k !== 12) return 'nd';
+        if (j === 3 && k !== 13) return 'rd';
+        return 'th';
     };
 
     const winner = leaderboard[0];
     const maxScore = totalQuestions * 30; // Assuming hard difficulty max points
+    
+    // Check for ties at first place
+    const topScore = winner?.score || 0;
+    const winners = leaderboard.filter(entry => entry.score === topScore);
+    const isTie = winners.length > 1;
 
     return (
         <div className="space-y-6">
@@ -64,19 +84,34 @@ export function FinalStandings({
                         <div className="flex justify-center mb-4">
                             <div className="relative">
                                 <Trophy className="h-20 w-20 text-yellow-500 animate-bounce" />
-                                <div className="absolute -top-2 -right-2">
-                                    <div className="h-8 w-8 bg-yellow-500 rounded-full flex items-center justify-center text-white font-bold">
-                                        1
+                                {!isTie && (
+                                    <div className="absolute -top-2 -right-2">
+                                        <div className="h-8 w-8 bg-yellow-500 rounded-full flex items-center justify-center text-white font-bold">
+                                            1
+                                        </div>
                                     </div>
-                                </div>
+                                )}
                             </div>
                         </div>
-                        <CardTitle className="text-3xl">
-                            🎉 {winner.participant.user.name} Wins! 🎉
-                        </CardTitle>
-                        <CardDescription className="text-lg">
-                            Final Score: {winner.score} points
-                        </CardDescription>
+                        {isTie ? (
+                            <>
+                                <CardTitle className="text-3xl">
+                                    🎉 It's a Tie! 🎉
+                                </CardTitle>
+                                <CardDescription className="text-lg">
+                                    {winners.map(w => w.participant.user.name).join(' & ')} tied with {topScore} points!
+                                </CardDescription>
+                            </>
+                        ) : (
+                            <>
+                                <CardTitle className="text-3xl">
+                                    🎉 {winner.participant.user.name} Wins! 🎉
+                                </CardTitle>
+                                <CardDescription className="text-lg">
+                                    Final Score: {winner.score} points
+                                </CardDescription>
+                            </>
+                        )}
                     </CardHeader>
                 </Card>
             )}
@@ -125,7 +160,7 @@ export function FinalStandings({
                                             <span className="font-semibold text-lg">
                                                 {entry.participant.user.name}
                                             </span>
-                                            {getPositionBadge(entry.position)}
+                                            {getPositionBadge(entry.position, entry.score)}
                                         </div>
                                         <div className="text-sm text-muted-foreground">
                                             {percentage}% accuracy

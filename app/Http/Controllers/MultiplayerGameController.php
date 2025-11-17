@@ -9,9 +9,11 @@ use App\Models\ParticipantAnswer;
 use App\Models\RoomParticipant;
 use App\MultiplayerGameStatus;
 use App\ParticipantStatus;
-use Illuminate\Http\JsonResponse;
+use App\Services\MultiplayerGameService;
+use App\Utilities\GameUtilities;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -27,7 +29,13 @@ class MultiplayerGameController extends Controller
     {
         $room = GameRoom::where('room_code', $roomCode)
             ->with(['host', 'participants.user', 'settings', 'multiplayerGame'])
-            ->firstOrFail();
+            ->first();
+
+        // If room doesn't exist (cancelled/deleted), redirect to lobby
+        if (!$room) {
+            return redirect()->route('lobby.index')
+                ->with('info', 'This game has been cancelled or no longer exists.');
+        }
 
         // Ensure user is a participant
         $participant = $room->participants()
@@ -46,6 +54,11 @@ class MultiplayerGameController extends Controller
                 ->withErrors(['game' => 'Game has not started yet.']);
         }
 
+        // If game is completed, redirect to results page
+        if ($multiplayerGame->status === MultiplayerGameStatus::COMPLETED) {
+            return redirect()->route('multiplayer.game.results', $roomCode);
+        }
+
         // Get current question
         $currentQuestion = $multiplayerGame->currentQuestion();
 
@@ -62,8 +75,36 @@ class MultiplayerGameController extends Controller
         // Check if current user has answered
         $hasAnswered = ParticipantAnswer::where('multiplayer_game_id', $multiplayerGame->id)
             ->where('participant_id', $participant->id)
-            ->where('question_index', $multiplayerGame->current_question_index)
+            ->where('question_id', $multiplayerGame->current_question_index)
             ->exists();
+
+        // Initialize game service
+        $gameService = app(MultiplayerGameService::class);
+
+        // Calculate new state flags
+        $allPlayersAnswered = $gameService->allParticipantsAnswered($multiplayerGame);
+        $currentUserHasAnswered = $gameService->currentUserHasAnswered($multiplayerGame, auth()->id());
+        $isReadyForNext = $multiplayerGame->isReadyForNext();
+        
+        // Calculate ready_since timestamp (when the ready state was first reached)
+        // This is used for auto-advance countdown on frontend
+        $readySince = null;
+        if ($isReadyForNext) {
+            // If all players answered, use the timestamp of the last answer
+            if ($allPlayersAnswered) {
+                $lastAnswer = ParticipantAnswer::where('multiplayer_game_id', $multiplayerGame->id)
+                    ->where('question_id', $multiplayerGame->current_question_index)
+                    ->orderBy('answered_at', 'desc')
+                    ->first();
+                $readySince = $lastAnswer?->answered_at?->toIso8601String();
+            } else {
+                // If time expired, calculate when timer reached 0
+                $timePerQuestion = $room->settings->time_per_question ?? 30;
+                $readySince = $multiplayerGame->question_started_at
+                    ->addSeconds($timePerQuestion)
+                    ->toIso8601String();
+            }
+        }
 
         return Inertia::render('multiplayer/Game', [
             'gameState' => [
@@ -81,11 +122,18 @@ class MultiplayerGameController extends Controller
                         'total_questions' => $room->settings->total_questions,
                     ],
                 ],
+                'game_status' => $multiplayerGame->status->value,
                 'current_question' => $currentQuestion,
                 'current_question_index' => $multiplayerGame->current_question_index,
                 'time_remaining' => $timeRemaining,
                 'participants' => $participantStatuses,
                 'round_results' => null, // Will be populated when showing results
+                
+                // New state flags for answer tracking and progression
+                'all_players_answered' => $allPlayersAnswered,
+                'current_user_has_answered' => $currentUserHasAnswered,
+                'is_ready_for_next' => $isReadyForNext,
+                'ready_since' => $readySince,
             ],
         ]);
     }
@@ -95,9 +143,10 @@ class MultiplayerGameController extends Controller
      *
      * @param string $roomCode
      * @param Request $request
-     * @return JsonResponse|RedirectResponse
+     * @param MultiplayerGameService $gameService
+     * @return RedirectResponse
      */
-    public function answer(string $roomCode, Request $request): JsonResponse|RedirectResponse
+    public function answer(string $roomCode, Request $request, MultiplayerGameService $gameService): RedirectResponse
     {
         $room = GameRoom::where('room_code', $roomCode)
             ->with(['multiplayerGame'])
@@ -110,9 +159,7 @@ class MultiplayerGameController extends Controller
         $multiplayerGame = $room->multiplayerGame;
 
         if (!$multiplayerGame) {
-            return response()->json([
-                'error' => 'Game has not started yet.'
-            ], 400);
+            return back()->withErrors(['answer' => 'Game has not started yet.']);
         }
 
         $validated = $request->validate([
@@ -124,35 +171,29 @@ class MultiplayerGameController extends Controller
 
         // Validate question index matches current question
         if ($questionIndex !== $multiplayerGame->current_question_index) {
-            return response()->json([
-                'error' => 'Invalid question index.'
-            ], 400);
+            return back()->withErrors(['answer' => 'Invalid question index.']);
         }
 
         // Check if time has expired
         $timeRemaining = $this->calculateTimeRemaining($multiplayerGame);
         if ($timeRemaining <= 0) {
-            return response()->json([
-                'error' => 'Time has expired for this question.'
-            ], 400);
+            return back()->withErrors(['answer' => 'Time has expired for this question.']);
         }
 
         // Check if participant has already answered this question
         $existingAnswer = ParticipantAnswer::where('multiplayer_game_id', $multiplayerGame->id)
             ->where('participant_id', $participant->id)
-            ->where('question_index', $questionIndex)
+            ->where('question_id', $questionIndex)
             ->first();
 
         if ($existingAnswer) {
-            return response()->json([
-                'error' => 'You have already answered this question.'
-            ], 400);
+            return back()->withErrors(['answer' => 'You have already answered this question.']);
         }
 
         // Get the question from the game's questions array
         $question = $multiplayerGame->game->questions[$questionIndex];
         $correctAnswer = $question['correct_answer'];
-        $isCorrect = $selectedAnswer === $correctAnswer;
+        $isCorrect = GameUtilities::isAnswerCorrect($selectedAnswer, $correctAnswer);
 
         // Calculate response time
         $responseTimeMs = $this->calculateResponseTime($multiplayerGame);
@@ -161,19 +202,66 @@ class MultiplayerGameController extends Controller
         ParticipantAnswer::create([
             'multiplayer_game_id' => $multiplayerGame->id,
             'participant_id' => $participant->id,
-            'question_index' => $questionIndex,
-            'question' => $question['question'],
+            'question_id' => $questionIndex,
             'selected_answer' => $selectedAnswer,
-            'correct_answer' => $correctAnswer,
             'is_correct' => $isCorrect,
             'answered_at' => now(),
             'response_time_ms' => $responseTimeMs,
         ]);
 
-        return response()->json([
-            'success' => true,
-            'is_correct' => $isCorrect,
-        ]);
+        // Return back to the game page (polling will update the state)
+        return back();
+    }
+
+    /**
+     * Advance to next question (host-triggered)
+     *
+     * @param string $roomCode
+     * @param MultiplayerGameService $gameService
+     * @return RedirectResponse
+     */
+    public function nextQuestion(string $roomCode, MultiplayerGameService $gameService): RedirectResponse
+    {
+        $room = GameRoom::where('room_code', $roomCode)
+            ->with(['multiplayerGame'])
+            ->firstOrFail();
+
+        $multiplayerGame = $room->multiplayerGame;
+
+        if (!$multiplayerGame) {
+            return back()->withErrors(['error' => 'Game has not started yet.']);
+        }
+
+        // Verify user is host
+        if ($room->host_user_id !== auth()->id()) {
+            return back()->withErrors(['error' => 'Only the host can advance questions.']);
+        }
+
+        // Verify game is active
+        if ($multiplayerGame->status !== MultiplayerGameStatus::ACTIVE) {
+            return back()->withErrors(['error' => 'Game is not active.']);
+        }
+
+        // Verify ready state (timer expired OR all answered)
+        if (!$multiplayerGame->isReadyForNext()) {
+            return back()->withErrors(['error' => 'Not ready to advance yet. Wait for timer to expire or all players to answer.']);
+        }
+
+        // Use database transaction for score calculation and state updates
+        DB::transaction(function () use ($gameService, $multiplayerGame) {
+            $gameService->advanceToNextQuestion($multiplayerGame);
+        });
+
+        // Refresh the model to get updated state
+        $multiplayerGame->refresh();
+
+        // If game is completed, redirect to results
+        if ($multiplayerGame->status === MultiplayerGameStatus::COMPLETED) {
+            return redirect()->route('multiplayer.game.results', $roomCode);
+        }
+
+        // Otherwise, stay on game page (polling will show new question)
+        return redirect()->route('multiplayer.game.show', $roomCode);
     }
 
     /**
@@ -206,7 +294,7 @@ class MultiplayerGameController extends Controller
         }
 
         // Determine if showing round results or final results
-        $isFinalResults = $multiplayerGame->status === MultiplayerGameStatus::Completed;
+        $isFinalResults = $multiplayerGame->status === MultiplayerGameStatus::COMPLETED;
 
         if ($isFinalResults) {
             return $this->showFinalResults($room, $multiplayerGame);
@@ -237,26 +325,39 @@ class MultiplayerGameController extends Controller
         // Get current leaderboard
         $leaderboard = $this->generateLeaderboard($room);
 
-        return Inertia::render('multiplayer/game/round-results', [
-            'room' => [
-                'id' => $room->id,
-                'room_code' => $room->room_code,
-                'status' => $room->status->value,
-            ],
-            'game' => [
-                'id' => $multiplayerGame->id,
+        return Inertia::render('multiplayer/Game', [
+            'gameState' => [
+                'room' => [
+                    'id' => $room->id,
+                    'room_code' => $room->room_code,
+                    'status' => $room->status->value,
+                    'host_user_id' => $room->host_user_id,
+                    'max_players' => $room->max_players,
+                    'current_players' => $room->current_players,
+                    'settings' => [
+                        'time_per_question' => $room->settings->time_per_question,
+                        'category_id' => $room->settings->category_id,
+                        'difficulty' => $room->settings->difficulty->value,
+                        'total_questions' => $room->settings->total_questions,
+                    ],
+                ],
+                'game_status' => $multiplayerGame->status->value,
+                'current_question' => null,
                 'current_question_index' => $currentQuestionIndex,
-                'total_questions' => $multiplayerGame->game->total_questions,
-                'status' => $multiplayerGame->status->value,
+                'time_remaining' => 0,
+                'participants' => [],
+                'round_results' => [
+                    'leaderboard' => $leaderboard,
+                    'question' => [
+                        'question' => $question['question'],
+                        'correct_answer' => $question['correct_answer'],
+                        'all_answers' => $question['shuffled_answers'] ?? [],
+                    ],
+                    'correct_answer' => $question['correct_answer'],
+                    'participant_results' => $participantResults,
+                    'has_more_questions' => ($currentQuestionIndex + 1) < $multiplayerGame->game->total_questions,
+                ],
             ],
-            'question' => [
-                'question' => $question['question'],
-                'correct_answer' => $question['correct_answer'],
-                'all_answers' => $question['shuffled_answers'] ?? [],
-            ],
-            'participantResults' => $participantResults,
-            'leaderboard' => $leaderboard,
-            'hasMoreQuestions' => ($currentQuestionIndex + 1) < $multiplayerGame->game->total_questions,
         ]);
     }
 
@@ -278,19 +379,33 @@ class MultiplayerGameController extends Controller
             ->get()
             ->groupBy('participant_id');
 
-        return Inertia::render('multiplayer/game/final-results', [
-            'room' => [
-                'id' => $room->id,
-                'room_code' => $room->room_code,
-                'status' => $room->status->value,
+        return Inertia::render('multiplayer/Game', [
+            'gameState' => [
+                'room' => [
+                    'id' => $room->id,
+                    'room_code' => $room->room_code,
+                    'status' => $room->status->value,
+                    'host_user_id' => $room->host_user_id,
+                    'max_players' => $room->max_players,
+                    'current_players' => $room->current_players,
+                    'settings' => [
+                        'time_per_question' => $room->settings->time_per_question,
+                        'category_id' => $room->settings->category_id,
+                        'difficulty' => $room->settings->difficulty->value,
+                        'total_questions' => $room->settings->total_questions,
+                    ],
+                ],
+                'game_status' => $multiplayerGame->status->value,
+                'current_question' => null,
+                'current_question_index' => $multiplayerGame->current_question_index,
+                'time_remaining' => 0,
+                'participants' => [],
+                'round_results' => [
+                    'leaderboard' => $leaderboard,
+                    'question' => null,
+                    'participant_results' => [],
+                ],
             ],
-            'game' => [
-                'id' => $multiplayerGame->id,
-                'total_questions' => $multiplayerGame->game->total_questions,
-                'status' => $multiplayerGame->status->value,
-            ],
-            'leaderboard' => $leaderboard,
-            'totalQuestions' => $multiplayerGame->game->total_questions,
         ]);
     }
 
@@ -307,7 +422,7 @@ class MultiplayerGameController extends Controller
         }
 
         $timePerQuestion = $multiplayerGame->game->gameRoom->settings->time_per_question ?? 30;
-        $elapsedSeconds = now()->diffInSeconds($multiplayerGame->question_started_at);
+        $elapsedSeconds = $multiplayerGame->question_started_at->diffInSeconds(now());
         $remaining = max(0, $timePerQuestion - $elapsedSeconds);
 
         return (int) $remaining;
@@ -325,7 +440,7 @@ class MultiplayerGameController extends Controller
             return 0;
         }
 
-        return (int) (now()->diffInMilliseconds($multiplayerGame->question_started_at));
+        return (int) ($multiplayerGame->question_started_at->diffInMilliseconds(now()));
     }
 
     /**
@@ -343,7 +458,7 @@ class MultiplayerGameController extends Controller
         return $participants->map(function ($participant) use ($multiplayerGame, $currentQuestionIndex) {
             $hasAnswered = ParticipantAnswer::where('multiplayer_game_id', $multiplayerGame->id)
                 ->where('participant_id', $participant->id)
-                ->where('question_index', $currentQuestionIndex)
+                ->where('question_id', $currentQuestionIndex)
                 ->exists();
 
             return [
@@ -374,22 +489,35 @@ class MultiplayerGameController extends Controller
     ): array {
         $participants = $room->participants()->with('user')->get();
 
-        return $participants->map(function ($participant) use ($multiplayerGame, $questionIndex) {
+        return $participants->map(function ($participant) use ($multiplayerGame, $questionIndex, $room) {
             $answer = ParticipantAnswer::where('multiplayer_game_id', $multiplayerGame->id)
                 ->where('participant_id', $participant->id)
-                ->where('question_index', $questionIndex)
+                ->where('question_id', $questionIndex)
                 ->first();
 
+            // Calculate points earned for this question
+            $difficulty = $room->settings->difficulty->value;
+            $pointsForCorrect = match($difficulty) {
+                'easy' => 10,
+                'medium' => 20,
+                'hard' => 30,
+                default => 10,
+            };
+            $pointsEarned = ($answer?->is_correct ?? false) ? $pointsForCorrect : 0;
+
             return [
-                'id' => $participant->id,
-                'user' => [
-                    'id' => $participant->user->id,
-                    'name' => $participant->user->name,
+                'participant' => [
+                    'id' => $participant->id,
+                    'user' => [
+                        'id' => $participant->user->id,
+                        'name' => $participant->user->name,
+                    ],
+                    'status' => $participant->status->value,
                 ],
-                'score' => $participant->score,
                 'is_correct' => $answer?->is_correct ?? false,
                 'selected_answer' => $answer?->selected_answer ?? null,
                 'response_time_ms' => $answer?->response_time_ms ?? null,
+                'points_earned' => $pointsEarned,
             ];
         })->toArray();
     }
@@ -411,12 +539,15 @@ class MultiplayerGameController extends Controller
         return $participants->map(function ($participant) use (&$position) {
             return [
                 'position' => $position++,
-                'user' => [
-                    'id' => $participant->user->id,
-                    'name' => $participant->user->name,
+                'participant' => [
+                    'id' => $participant->id,
+                    'user' => [
+                        'id' => $participant->user->id,
+                        'name' => $participant->user->name,
+                    ],
+                    'status' => $participant->status->value,
                 ],
                 'score' => $participant->score,
-                'status' => $participant->status->value,
             ];
         })->toArray();
     }

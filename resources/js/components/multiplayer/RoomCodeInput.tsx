@@ -51,45 +51,34 @@ export function RoomCodeInput({
     };
 
     const isValid = value.length === 6;
-    const displayValue = value.padEnd(6, '_');
 
     return (
         <div className="space-y-2">
             {label && <Label htmlFor="room-code">{label}</Label>}
             <div className="flex gap-2">
-                <div className="relative flex-1">
-                    <Input
-                        ref={inputRef}
-                        id="room-code"
-                        type="text"
-                        value={value}
-                        onChange={handleChange}
-                        disabled={disabled}
-                        placeholder="ABC123"
-                        maxLength={6}
-                        className={cn(
-                            'font-mono text-2xl tracking-[0.5em] text-center uppercase',
-                            error && 'border-destructive focus-visible:ring-destructive',
-                            isValid && !error && 'border-green-500 focus-visible:ring-green-500'
-                        )}
-                        aria-invalid={!!error}
-                        aria-describedby={error ? 'room-code-error' : undefined}
-                    />
-                    {!disabled && (
-                        <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-                            <span className="font-mono text-2xl tracking-[0.5em] text-muted-foreground/30">
-                                {displayValue}
-                            </span>
-                        </div>
+                <Input
+                    ref={inputRef}
+                    id="room-code"
+                    type="text"
+                    value={value}
+                    onChange={handleChange}
+                    disabled={disabled}
+                    placeholder="ABC123"
+                    maxLength={6}
+                    className={cn(
+                        'font-mono text-2xl tracking-[0.5em] text-center uppercase',
+                        error && 'border-destructive focus-visible:ring-destructive',
+                        isValid && !error && 'border-green-500 focus-visible:ring-green-500'
                     )}
-                </div>
-                {showCopyButton && value.length === 6 && (
+                    aria-invalid={!!error}
+                    aria-describedby={error ? 'room-code-error' : undefined}
+                />
+                {showCopyButton && (
                     <Button
                         type="button"
                         variant="outline"
                         size="icon"
                         onClick={handleCopy}
-                        disabled={disabled}
                         className="shrink-0"
                     >
                         {copied ? (
