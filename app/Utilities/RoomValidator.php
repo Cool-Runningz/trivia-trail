@@ -12,7 +12,7 @@ class RoomValidator
     /**
      * Maximum number of rooms a user can create per hour.
      */
-    private const MAX_ROOMS_PER_HOUR = 5;
+    private const MAX_ROOMS_PER_HOUR = 10;
 
     /**
      * Check if a room has capacity for additional participants.

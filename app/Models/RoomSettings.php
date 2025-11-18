@@ -8,6 +8,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class RoomSettings extends Model
 {
+    /**
+     * Default time per question in seconds.
+     */
+    public const DEFAULT_TIME_PER_QUESTION = 20;
+
     protected $fillable = [
         'room_id',
         'time_per_question',

@@ -313,7 +313,6 @@ export interface CreateRoomFormData {
     category_id?: number;
     difficulty: DifficultyLevel;
     total_questions: number;
-    max_players: number;
 }
 
 export interface JoinRoomFormData {

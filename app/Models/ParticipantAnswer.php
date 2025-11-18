@@ -64,7 +64,7 @@ class ParticipantAnswer extends Model
 
         // Standard scoring: base points with time bonus
         $basePoints = 100;
-        $timeBonus = max(0, 30 - $this->getResponseTimeInSeconds()) * 2;
+        $timeBonus = max(0, RoomSettings::DEFAULT_TIME_PER_QUESTION - $this->getResponseTimeInSeconds()) * 2;
         
         return (int) ($basePoints + $timeBonus);
     }

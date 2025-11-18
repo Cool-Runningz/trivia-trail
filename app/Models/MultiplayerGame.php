@@ -67,7 +67,7 @@ class MultiplayerGame extends Model
             return 0;
         }
 
-        $timePerQuestion = $this->room->settings->time_per_question ?? 30;
+        $timePerQuestion = $this->room->settings->time_per_question ?? RoomSettings::DEFAULT_TIME_PER_QUESTION;
         $elapsed = $this->question_started_at->diffInSeconds(now());
         
         return max(0, $timePerQuestion - $elapsed);
@@ -104,7 +104,7 @@ class MultiplayerGame extends Model
             return 0;
         }
 
-        $timePerQuestion = $this->room->settings->time_per_question ?? 30;
+        $timePerQuestion = $this->room->settings->time_per_question ?? RoomSettings::DEFAULT_TIME_PER_QUESTION;
         $elapsed = $this->question_started_at->diffInSeconds(now());
         
         return max(0, $timePerQuestion - $elapsed);

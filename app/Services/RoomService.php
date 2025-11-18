@@ -15,6 +15,11 @@ use Illuminate\Support\Facades\DB;
 class RoomService
 {
     /**
+     * Maximum number of players allowed per room.
+     */
+    private const MAX_PLAYERS_PER_ROOM = 10;
+
+    /**
      * Create a new game room.
      */
     public function createRoom(User $host, array $settings = []): GameRoom
@@ -32,7 +37,7 @@ class RoomService
             $room = GameRoom::create([
                 'room_code' => $roomCode,
                 'host_user_id' => $host->id,
-                'max_players' => $settings['max_players'] ?? 8,
+                'max_players' => self::MAX_PLAYERS_PER_ROOM,
                 'current_players' => 1,
                 'status' => RoomStatus::WAITING,
                 'expires_at' => now()->addHours(24),
@@ -41,7 +46,7 @@ class RoomService
             // Create room settings
             RoomSettings::create([
                 'room_id' => $room->id,
-                'time_per_question' => $settings['time_per_question'] ?? 30,
+                'time_per_question' => $settings['time_per_question'] ?? RoomSettings::DEFAULT_TIME_PER_QUESTION,
                 'scoring_mode' => $settings['scoring_mode'] ?? 'standard',
                 'category_id' => $settings['category_id'] ?? null,
                 'difficulty' => $settings['difficulty'] ?? 'medium',
@@ -191,12 +196,7 @@ class RoomService
         }
 
         DB::transaction(function () use ($room, $settings) {
-            // Update room max_players if provided
-            if (isset($settings['max_players'])) {
-                $room->update(['max_players' => $settings['max_players']]);
-            }
-
-            // Update room settings
+            // Update room settings (max_players is fixed and cannot be changed)
             $room->settings()->update(array_filter([
                 'time_per_question' => $settings['time_per_question'] ?? null,
                 'scoring_mode' => $settings['scoring_mode'] ?? null,

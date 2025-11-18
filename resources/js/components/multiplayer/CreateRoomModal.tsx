@@ -3,6 +3,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 import { Category, CreateRoomFormData, DifficultyLevel } from '@/types';
 import multiplayer from '@/routes/multiplayer';
 
@@ -16,7 +18,6 @@ export function CreateRoomModal({ open, onOpenChange, categories }: CreateRoomMo
     const { data, setData, post, processing, errors, reset } = useForm<CreateRoomFormData>({
         difficulty: 'medium',
         total_questions: 10,
-        max_players: 8,
     });
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -47,6 +48,15 @@ export function CreateRoomModal({ open, onOpenChange, categories }: CreateRoomMo
                     </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
+                    {errors && 'error' in errors && typeof errors.error === 'string' && (
+                        <Alert variant="destructive">
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertDescription>
+                                {errors.error}
+                            </AlertDescription>
+                        </Alert>
+                    )}
+                    
                     <div className="space-y-2">
                         <Label htmlFor="category">Category (Optional)</Label>
                         <Select
@@ -110,28 +120,6 @@ export function CreateRoomModal({ open, onOpenChange, categories }: CreateRoomMo
                         </Select>
                         {errors.total_questions && (
                             <p className="text-sm text-destructive">{errors.total_questions}</p>
-                        )}
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label htmlFor="max_players">Max Players</Label>
-                        <Select
-                            value={data.max_players.toString()}
-                            onValueChange={(value) => setData('max_players', parseInt(value))}
-                        >
-                            <SelectTrigger id="max_players">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="2">2 Players</SelectItem>
-                                <SelectItem value="4">4 Players</SelectItem>
-                                <SelectItem value="6">6 Players</SelectItem>
-                                <SelectItem value="8">8 Players</SelectItem>
-                                <SelectItem value="10">10 Players</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        {errors.max_players && (
-                            <p className="text-sm text-destructive">{errors.max_players}</p>
                         )}
                     </div>
 

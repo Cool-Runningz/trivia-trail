@@ -190,7 +190,7 @@ class MultiplayerGameService
             return false;
         }
 
-        $timePerQuestion = $multiplayerGame->room->settings->time_per_question ?? 30;
+        $timePerQuestion = $multiplayerGame->room->settings->time_per_question ?? RoomSettings::DEFAULT_TIME_PER_QUESTION;
         $elapsedSeconds = $multiplayerGame->question_started_at->diffInSeconds(now());
 
         return $elapsedSeconds <= $timePerQuestion;
@@ -208,7 +208,7 @@ class MultiplayerGameService
             return 0;
         }
 
-        $timePerQuestion = $multiplayerGame->room->settings->time_per_question ?? 30;
+        $timePerQuestion = $multiplayerGame->room->settings->time_per_question ?? RoomSettings::DEFAULT_TIME_PER_QUESTION;
         $elapsedSeconds = $multiplayerGame->question_started_at->diffInSeconds(now());
         $remaining = max(0, $timePerQuestion - $elapsedSeconds);
 

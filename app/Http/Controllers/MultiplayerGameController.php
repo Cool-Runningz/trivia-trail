@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\MultiplayerGame;
 use App\Models\ParticipantAnswer;
 use App\Models\RoomParticipant;
+use App\Models\RoomSettings;
 use App\MultiplayerGameStatus;
 use App\ParticipantStatus;
 use App\Services\MultiplayerGameService;
@@ -99,7 +100,7 @@ class MultiplayerGameController extends Controller
                 $readySince = $lastAnswer?->answered_at?->toIso8601String();
             } else {
                 // If time expired, calculate when timer reached 0
-                $timePerQuestion = $room->settings->time_per_question ?? 30;
+                $timePerQuestion = $room->settings->time_per_question ?? RoomSettings::DEFAULT_TIME_PER_QUESTION;
                 $readySince = $multiplayerGame->question_started_at
                     ->addSeconds($timePerQuestion)
                     ->toIso8601String();
@@ -421,7 +422,7 @@ class MultiplayerGameController extends Controller
             return 0;
         }
 
-        $timePerQuestion = $multiplayerGame->game->gameRoom->settings->time_per_question ?? 30;
+        $timePerQuestion = $multiplayerGame->game->gameRoom->settings->time_per_question ?? RoomSettings::DEFAULT_TIME_PER_QUESTION;
         $elapsedSeconds = $multiplayerGame->question_started_at->diffInSeconds(now());
         $remaining = max(0, $timePerQuestion - $elapsedSeconds);
 

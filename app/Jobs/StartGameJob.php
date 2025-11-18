@@ -65,7 +65,7 @@ class StartGameJob implements ShouldQueue
         ]);
 
         // Schedule the next question job
-        $timePerQuestion = $multiplayerGame->room->settings->time_per_question ?? 30;
+        $timePerQuestion = $multiplayerGame->room->settings->time_per_question ?? RoomSettings::DEFAULT_TIME_PER_QUESTION;
         NextQuestionJob::dispatch($this->multiplayerGameId)
             ->delay(now()->addSeconds($timePerQuestion));
     }

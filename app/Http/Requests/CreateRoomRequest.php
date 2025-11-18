@@ -22,7 +22,7 @@ class CreateRoomRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'max_players' => ['nullable', 'integer', 'min:2', 'max:20'],
+            // max_players is fixed at 8 and not user-configurable
             'time_per_question' => ['nullable', 'integer', 'min:10', 'max:60'],
             'scoring_mode' => ['nullable', Rule::in(['standard'])],
             'category_id' => ['nullable', 'integer'],
@@ -37,8 +37,6 @@ class CreateRoomRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'max_players.min' => 'A room must have at least 2 players.',
-            'max_players.max' => 'A room cannot have more than 20 players.',
             'time_per_question.min' => 'Time per question must be at least 10 seconds.',
             'time_per_question.max' => 'Time per question cannot exceed 60 seconds.',
             'total_questions.min' => 'A game must have at least 5 questions.',

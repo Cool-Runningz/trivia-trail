@@ -29,7 +29,7 @@ class CleanupInactiveRoomsJob implements ShouldQueue
 
         // Clean up expired rooms (older than 24 hours)
         $expiredRooms = GameRoom::where('expires_at', '<', now())
-            ->whereIn('status', [RoomStatus::Waiting, RoomStatus::Starting])
+            ->where('status', RoomStatus::WAITING)
             ->get();
 
         foreach ($expiredRooms as $room) {
@@ -43,7 +43,7 @@ class CleanupInactiveRoomsJob implements ShouldQueue
         }
 
         // Clean up completed rooms (older than 1 hour)
-        $completedRooms = GameRoom::where('status', RoomStatus::Completed)
+        $completedRooms = GameRoom::where('status', RoomStatus::COMPLETED)
             ->where('updated_at', '<', now()->subHour())
             ->get();
 
@@ -57,7 +57,7 @@ class CleanupInactiveRoomsJob implements ShouldQueue
         }
 
         // Clean up cancelled rooms immediately
-        $cancelledRooms = GameRoom::where('status', RoomStatus::Cancelled)->get();
+        $cancelledRooms = GameRoom::where('status', RoomStatus::CANCELLED)->get();
 
         foreach ($cancelledRooms as $room) {
             Log::info('CleanupInactiveRoomsJob: Deleting cancelled room', [

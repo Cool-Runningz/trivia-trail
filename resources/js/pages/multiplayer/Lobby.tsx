@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Head, usePage } from '@inertiajs/react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -26,18 +26,22 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function Lobby({ rooms, activeGames, categories }: LobbyPageProps) {
     const [createModalOpen, setCreateModalOpen] = useState(false);
     const [joinModalOpen, setJoinModalOpen] = useState(false);
+    const shownFlashMessages = useRef<Set<string>>(new Set());
     const { flash } = usePage<any>().props;
 
-    // Show toast notifications for flash messages
+    // Show toast notifications for flash messages (prevent duplicates during polling)
     useEffect(() => {
-        if (flash?.success) {
+        if (flash?.success && !shownFlashMessages.current.has(flash.success)) {
             toast.success(flash.success);
+            shownFlashMessages.current.add(flash.success);
         }
-        if (flash?.info) {
+        if (flash?.info && !shownFlashMessages.current.has(flash.info)) {
             toast.info(flash.info);
+            shownFlashMessages.current.add(flash.info);
         }
-        if (flash?.error) {
+        if (flash?.error && !shownFlashMessages.current.has(flash.error)) {
             toast.error(flash.error);
+            shownFlashMessages.current.add(flash.error);
         }
     }, [flash]);
 

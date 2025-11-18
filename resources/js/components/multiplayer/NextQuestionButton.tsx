@@ -15,7 +15,7 @@ export function NextQuestionButton({
     readySince,
     allPlayersAnswered
 }: NextQuestionButtonProps) {
-    const [countdown, setCountdown] = useState(2);
+    const [countdown, setCountdown] = useState(3);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const hasAdvanced = useRef(false);
 
@@ -46,7 +46,7 @@ export function NextQuestionButton({
         const updateCountdown = () => {
             const now = Date.now();
             const elapsed = Math.floor((now - readyTime) / 1000);
-            const remaining = Math.max(0, 2 - elapsed);
+            const remaining = Math.max(0, 3 - elapsed);
 
             setCountdown(remaining);
 
