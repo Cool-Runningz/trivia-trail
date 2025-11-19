@@ -363,6 +363,49 @@ class MultiplayerGameController extends Controller
     }
 
     /**
+     * Get all questions with current user's answers for review
+     *
+     * @param MultiplayerGame $multiplayerGame
+     * @param int $userId
+     * @return array
+     */
+    private function getQuestionsWithUserAnswers(MultiplayerGame $multiplayerGame, int $userId): array
+    {
+        // Get participant for current user
+        $participant = $multiplayerGame->room->participants()
+            ->where('user_id', $userId)
+            ->first();
+
+        if (!$participant) {
+            return [];
+        }
+
+        // Get all questions from the game
+        $questions = $multiplayerGame->game->questions ?? [];
+
+        // Get all answers for this participant
+        $answers = ParticipantAnswer::where('multiplayer_game_id', $multiplayerGame->id)
+            ->where('participant_id', $participant->id)
+            ->get()
+            ->keyBy('question_id');
+
+        // Map questions with user answers
+        return collect($questions)->map(function ($question, $index) use ($answers) {
+            $answer = $answers->get($index);
+
+            return [
+                'question_number' => $index + 1,
+                'question_text' => $question['question'],
+                'correct_answer' => $question['correct_answer'],
+                'all_answers' => $question['shuffled_answers'] ?? [],
+                'user_answer' => $answer?->selected_answer,
+                'is_correct' => $answer?->is_correct ?? false,
+                'answered' => $answer !== null,
+            ];
+        })->toArray();
+    }
+
+    /**
      * Show final results after game completion
      *
      * @param GameRoom $room
@@ -374,11 +417,8 @@ class MultiplayerGameController extends Controller
         // Get final leaderboard
         $leaderboard = $this->generateLeaderboard($room);
 
-        // Get all participant answers for detailed breakdown
-        $participantAnswers = ParticipantAnswer::where('multiplayer_game_id', $multiplayerGame->id)
-            ->with('participant.user')
-            ->get()
-            ->groupBy('participant_id');
+        // Get questions with current user's answers for review
+        $questionsReview = $this->getQuestionsWithUserAnswers($multiplayerGame, auth()->id());
 
         return Inertia::render('multiplayer/Game', [
             'gameState' => [
@@ -405,6 +445,7 @@ class MultiplayerGameController extends Controller
                     'leaderboard' => $leaderboard,
                     'question' => null,
                     'participant_results' => [],
+                    'questions_review' => $questionsReview,
                 ],
             ],
         ]);

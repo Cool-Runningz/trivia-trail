@@ -273,11 +273,22 @@ export interface MultiplayerGameState {
     ready_since?: string | null;
 }
 
+export interface QuestionReviewItem {
+    question_number: number;
+    question_text: string;
+    correct_answer: string;
+    all_answers: string[];
+    user_answer?: string;
+    is_correct: boolean;
+    answered: boolean;
+}
+
 export interface RoundResults {
     question: Question;
     correct_answer: string;
     participant_results: ParticipantResult[];
     leaderboard: LeaderboardEntry[];
+    questions_review?: QuestionReviewItem[];
 }
 
 export interface ParticipantResult {
