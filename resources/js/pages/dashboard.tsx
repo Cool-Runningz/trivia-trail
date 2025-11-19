@@ -103,7 +103,7 @@ export default function Dashboard() {
                             <div className="space-y-2">
                                 <div className="flex items-center gap-2 text-sm">
                                     <Clock className="h-4 w-4 text-muted-foreground" />
-                                    <span>30-second timer per question</span>
+                                    <span>Customized question timers</span>
                                 </div>
                                 <div className="flex items-center gap-2 text-sm">
                                     <Trophy className="h-4 w-4 text-muted-foreground" />
