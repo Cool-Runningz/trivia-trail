@@ -464,7 +464,7 @@ class MultiplayerGameController extends Controller
             return 0;
         }
 
-        $timePerQuestion = $multiplayerGame->game->gameRoom->settings->time_per_question ?? RoomSettings::DEFAULT_TIME_PER_QUESTION;
+        $timePerQuestion = $multiplayerGame->room->settings->time_per_question ?? RoomSettings::DEFAULT_TIME_PER_QUESTION;
         $elapsedSeconds = $multiplayerGame->question_started_at->diffInSeconds(now());
         $remaining = max(0, $timePerQuestion - $elapsedSeconds);
 

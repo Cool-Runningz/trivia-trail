@@ -18,6 +18,7 @@ export function CreateRoomModal({ open, onOpenChange, categories }: CreateRoomMo
     const { data, setData, post, processing, errors, reset } = useForm<CreateRoomFormData>({
         difficulty: 'medium',
         total_questions: 10,
+        time_per_question: 20,
     });
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -120,6 +121,27 @@ export function CreateRoomModal({ open, onOpenChange, categories }: CreateRoomMo
                         </Select>
                         {errors.total_questions && (
                             <p className="text-sm text-destructive">{errors.total_questions}</p>
+                        )}
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="time_per_question">Time Per Question</Label>
+                        <Select
+                            value={data.time_per_question?.toString() || '20'}
+                            onValueChange={(value) => setData('time_per_question', parseInt(value))}
+                        >
+                            <SelectTrigger id="time_per_question">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="10">10 seconds</SelectItem>
+                                <SelectItem value="20">20 seconds</SelectItem>
+                                <SelectItem value="30">30 seconds</SelectItem>
+                                <SelectItem value="45">45 seconds</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        {errors.time_per_question && (
+                            <p className="text-sm text-destructive">{errors.time_per_question}</p>
                         )}
                     </div>
 

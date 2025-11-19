@@ -325,6 +325,7 @@ export interface CreateRoomFormData {
     category_id?: number;
     difficulty: DifficultyLevel;
     total_questions: number;
+    time_per_question?: number;
 }
 
 export interface JoinRoomFormData {
