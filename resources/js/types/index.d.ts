@@ -281,6 +281,7 @@ export interface QuestionReviewItem {
     user_answer?: string;
     is_correct: boolean;
     answered: boolean;
+    points_earned: number;
 }
 
 export interface RoundResults {

@@ -122,7 +122,9 @@ export default function MultiplayerGame({ gameState: initialGameState }: Multipl
                         <FinalStandings
                             leaderboard={round_results.leaderboard}
                             totalQuestions={room.settings.total_questions}
+                            difficulty={room.settings.difficulty}
                             roomCode={room.room_code}
+                            questionsReview={round_results.questions_review}
                         />
                         </div>
                     </div>

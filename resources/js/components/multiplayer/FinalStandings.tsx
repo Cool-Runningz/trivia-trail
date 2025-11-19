@@ -2,20 +2,26 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Trophy, Medal, Award, Home, RotateCcw } from 'lucide-react';
-import { type LeaderboardEntry } from '@/types';
+import { type LeaderboardEntry, type QuestionReviewItem, type DifficultyLevel } from '@/types';
 import { cn } from '@/lib/utils';
 import { router } from '@inertiajs/react';
 import lobby from '@/routes/lobby';
+import { QuestionReview } from './QuestionReview';
+import { GameDetails } from '@/components/game';
 
 interface FinalStandingsProps {
     leaderboard: LeaderboardEntry[];
     totalQuestions: number;
+    difficulty: DifficultyLevel;
     roomCode?: string;
+    questionsReview?: QuestionReviewItem[];
 }
 
 export function FinalStandings({ 
     leaderboard, 
-    totalQuestions 
+    totalQuestions,
+    difficulty,
+    questionsReview
 }: FinalStandingsProps) {
     const handleReturnToLobby = () => {
         router.visit(lobby.index().url);
@@ -183,37 +189,17 @@ export function FinalStandings({
                 </CardContent>
             </Card>
 
-            {/* Game Stats */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>Game Statistics</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="text-center p-4 rounded-lg bg-muted">
-                            <div className="text-2xl font-bold">{totalQuestions}</div>
-                            <div className="text-sm text-muted-foreground">Questions</div>
-                        </div>
-                        <div className="text-center p-4 rounded-lg bg-muted">
-                            <div className="text-2xl font-bold">{leaderboard.length}</div>
-                            <div className="text-sm text-muted-foreground">Players</div>
-                        </div>
-                        <div className="text-center p-4 rounded-lg bg-muted">
-                            <div className="text-2xl font-bold">{winner?.score || 0}</div>
-                            <div className="text-sm text-muted-foreground">Highest Score</div>
-                        </div>
-                        <div className="text-center p-4 rounded-lg bg-muted">
-                            <div className="text-2xl font-bold">
-                                {leaderboard.length > 0 
-                                    ? Math.round(leaderboard.reduce((sum, e) => sum + e.score, 0) / leaderboard.length)
-                                    : 0
-                                }
-                            </div>
-                            <div className="text-sm text-muted-foreground">Average Score</div>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
+            {/* Game Details */}
+            <GameDetails 
+                difficulty={difficulty}
+                totalQuestions={totalQuestions}
+                playerCount={leaderboard.length}
+            />
+
+            {/* Question Review Section */}
+            {questionsReview && questionsReview.length > 0 && (
+                <QuestionReview questions={questionsReview} />
+            )}
 
             {/* Action Buttons */}
             <div className="flex gap-4 justify-center">

@@ -401,6 +401,7 @@ class MultiplayerGameController extends Controller
                 'user_answer' => $answer?->selected_answer,
                 'is_correct' => $answer?->is_correct ?? false,
                 'answered' => $answer !== null,
+                'points_earned' => $answer?->calculateScore() ?? 0,
             ];
         })->toArray();
     }

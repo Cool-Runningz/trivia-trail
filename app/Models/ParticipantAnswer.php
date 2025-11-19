@@ -58,15 +58,11 @@ class ParticipantAnswer extends Model
 
     public function calculateScore(): int
     {
-        if (!$this->is_correct) {
-            return 0;
-        }
-
-        // Standard scoring: base points with time bonus
-        $basePoints = 100;
-        $timeBonus = max(0, RoomSettings::DEFAULT_TIME_PER_QUESTION - $this->getResponseTimeInSeconds()) * 2;
+        // Get the difficulty from the game settings
+        $difficulty = $this->multiplayerGame->room->settings->difficulty;
         
-        return (int) ($basePoints + $timeBonus);
+        // Use simple difficulty-based scoring (same as single-player)
+        return \App\Utilities\GameUtilities::calculatePoints($difficulty, $this->is_correct);
     }
 
     // Scopes
