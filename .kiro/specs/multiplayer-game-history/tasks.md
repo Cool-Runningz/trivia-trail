@@ -5,20 +5,20 @@
   - Add index on `room_participants(user_id, room_id)` if not exists
   - _Requirements: 1.1, 5.2_
 
-- [ ] 2. Implement backend history query logic
-  - [ ] 2.1 Add `getGameHistory()` method to LobbyController
+- [x] 2. Implement backend history query logic
+  - [x] 2.1 Add `getGameHistory()` method to LobbyController
     - Query completed games from past 7 days where user was participant
     - Eager load participants, multiplayer game, and settings relationships
     - Order by completion date descending, limit to 20 results
     - _Requirements: 1.1, 1.2, 1.3, 2.1, 2.2, 5.3_
 
-  - [ ] 2.2 Add `formatHistoryEntry()` helper method
+  - [x] 2.2 Add `formatHistoryEntry()` helper method
     - Calculate user's position/rank in the game
     - Format participant preview data (first 3-4 participants)
     - Extract game metadata (difficulty, category, question count)
     - _Requirements: 1.4, 4.1, 4.2, 4.3, 4.5_
 
-  - [ ] 2.3 Update LobbyController index method
+  - [x] 2.3 Update LobbyController index method
     - Call `getGameHistory()` and pass to Inertia view
     - Handle cases where game data is incomplete
     - _Requirements: 1.1, 1.5_

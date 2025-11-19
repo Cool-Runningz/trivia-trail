@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\GameRoom;
+use App\Models\User;
 use App\RoomStatus;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Inertia\Inertia;
 
 class LobbyController extends Controller
@@ -79,10 +81,57 @@ class LobbyController extends Controller
         $rooms = $availableRooms->map($mapRoom);
         $activeGames = $userActiveRooms->map($mapRoom);
 
+        // Get game history and format entries, filtering out any incomplete data
+        $gameHistory = $this->getGameHistory($request->user())
+            ->map(fn($room) => $this->formatHistoryEntry($room, $request->user()))
+            ->filter() // Remove null entries from incomplete game data
+            ->values()
+            ->toArray();
+
         return Inertia::render('multiplayer/Lobby', [
             'rooms' => $rooms,
             'activeGames' => $activeGames,
             'categories' => $categories,
+            'gameHistory' => $gameHistory,
         ]);
+    }
+
+    /**
+     * Get game history for the authenticated user.
+     * Returns completed games from the past 7 days where user was a participant.
+     */
+    protected function getGameHistory(User $user): Collection
+    {
+        return GameRoom::query()
+            ->where('status', RoomStatus::COMPLETED)
+            ->where('updated_at', '>=', now()->subDays(7))
+            ->whereHas('participants', function ($query) use ($user) {
+                $query->where('user_id', $user->id);
+            })
+            ->with(['settings'])
+            ->orderBy('updated_at', 'desc')
+            ->limit(20)
+            ->get();
+    }
+
+    /**
+     * Format a game room into a simple history entry.
+     * Just basic info to link to the results page.
+     */
+    protected function formatHistoryEntry(GameRoom $room, User $user): ?array
+    {
+        // Handle cases where settings are missing
+        if (!$room->settings) {
+            \Log::warning("Missing settings for room {$room->id}");
+            return null;
+        }
+
+        return [
+            'id' => $room->id,
+            'room_code' => $room->room_code,
+            'completed_at' => $room->updated_at->toISOString(),
+            'difficulty' => $room->settings->difficulty->value,
+            'category_id' => $room->settings->category_id,
+        ];
     }
 }
