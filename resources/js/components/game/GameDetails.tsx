@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { BarChart3, Clock, Target, Trophy, Users } from 'lucide-react';
+import { BarChart3, Clock, Target, Trophy, Users, BookOpen } from 'lucide-react';
 import { type DifficultyLevel } from '@/types';
 
 interface GameDetailsProps {
@@ -7,15 +7,17 @@ interface GameDetailsProps {
     totalQuestions: number;
     duration?: number | null; // in minutes (single-player)
     playerCount?: number; // multiplayer
+    category?: string | null; // category name
 }
 
-export function GameDetails({ difficulty, totalQuestions, duration, playerCount }: GameDetailsProps) {
+export function GameDetails({ difficulty, totalQuestions, duration, playerCount, category }: GameDetailsProps) {
     const formatDuration = (minutes: number | null) => {
         if (!minutes) return 'N/A';
         if (minutes < 1) return '< 1 minute';
         if (minutes === 1) return '1 minute';
         return `${Math.round(minutes)} minutes`;
     };
+
 
     return (
         <Card>
@@ -26,7 +28,7 @@ export function GameDetails({ difficulty, totalQuestions, duration, playerCount 
                 </CardTitle>
             </CardHeader>
             <CardContent>
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                <div className={`grid grid-cols-1 gap-4 md:grid-cols-2`}>
                     <div className="flex items-center gap-3">
                         <Target className="h-5 w-5 text-muted-foreground" />
                         <div>
@@ -34,6 +36,16 @@ export function GameDetails({ difficulty, totalQuestions, duration, playerCount 
                             <p className="text-sm text-muted-foreground capitalize">{difficulty}</p>
                         </div>
                     </div>
+                    
+                    {category && (
+                        <div className="flex items-center gap-3">
+                            <BookOpen className="h-5 w-5 text-muted-foreground" />
+                            <div>
+                                <p className="text-sm font-medium">Category</p>
+                                <p className="text-sm text-muted-foreground">{category}</p>
+                            </div>
+                        </div>
+                    )}
                     
                     {duration !== undefined ? (
                         <div className="flex items-center gap-3">

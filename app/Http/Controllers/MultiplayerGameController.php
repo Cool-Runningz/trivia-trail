@@ -11,6 +11,7 @@ use App\Models\RoomSettings;
 use App\MultiplayerGameStatus;
 use App\ParticipantStatus;
 use App\Services\MultiplayerGameService;
+use App\Services\OpenTriviaService;
 use App\Utilities\GameUtilities;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -20,6 +21,9 @@ use Inertia\Response;
 
 class MultiplayerGameController extends Controller
 {
+    public function __construct(
+        private OpenTriviaService $triviaService
+    ) {}
     /**
      * Show the active game state with polling data
      *
@@ -421,6 +425,9 @@ class MultiplayerGameController extends Controller
         // Get questions with current user's answers for review
         $questionsReview = $this->getQuestionsWithUserAnswers($multiplayerGame, auth()->id());
 
+        // Get category name if category_id exists
+        $categoryName = $this->triviaService->getCategoryName($room->settings->category_id);
+
         return Inertia::render('multiplayer/Game', [
             'gameState' => [
                 'room' => [
@@ -433,6 +440,7 @@ class MultiplayerGameController extends Controller
                     'settings' => [
                         'time_per_question' => $room->settings->time_per_question,
                         'category_id' => $room->settings->category_id,
+                        'category' => $categoryName,
                         'difficulty' => $room->settings->difficulty->value,
                         'total_questions' => $room->settings->total_questions,
                     ],

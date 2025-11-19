@@ -197,6 +197,7 @@ export interface GameResultsPageProps {
         id: number;
         difficulty: DifficultyLevel;
         total_questions: number;
+        category?: string | null;
         started_at: string;
         completed_at: string;
         time_taken_minutes: number | null;
@@ -226,6 +227,7 @@ export type ParticipantStatus = 'joined' | 'ready' | 'playing' | 'finished' | 'd
 export interface RoomSettings {
     time_per_question: number;
     category_id?: number;
+    category?: string | null;
     difficulty: DifficultyLevel;
     total_questions: number;
 }

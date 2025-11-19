@@ -52,6 +52,24 @@ class OpenTriviaService
     }
 
     /**
+     * Get category name by ID
+     *
+     * @param int|null $categoryId
+     * @return string|null
+     */
+    public function getCategoryName(?int $categoryId): ?string
+    {
+        if (!$categoryId) {
+            return null;
+        }
+
+        $categories = $this->getCategories();
+        $category = collect($categories)->firstWhere('id', $categoryId);
+        
+        return $category['name'] ?? null;
+    }
+
+    /**
      * Fetch questions from Open Trivia Database API
      *
      * @param array $params

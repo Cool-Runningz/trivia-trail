@@ -125,6 +125,7 @@ export default function MultiplayerGame({ gameState: initialGameState }: Multipl
                             difficulty={room.settings.difficulty}
                             roomCode={room.room_code}
                             questionsReview={round_results.questions_review}
+                            category={room.settings.category}
                         />
                         </div>
                     </div>

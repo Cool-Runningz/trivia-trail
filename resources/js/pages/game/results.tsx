@@ -72,6 +72,7 @@ export default function GameResults({ game, results }: GameResultsPageProps) {
                             difficulty={game.difficulty}
                             totalQuestions={game.total_questions}
                             duration={game.time_taken_minutes}
+                            category={game.category}
                         />
                     </div>
 

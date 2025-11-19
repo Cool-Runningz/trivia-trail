@@ -15,13 +15,15 @@ interface FinalStandingsProps {
     difficulty: DifficultyLevel;
     roomCode?: string;
     questionsReview?: QuestionReviewItem[];
+    category?: string | null;
 }
 
 export function FinalStandings({ 
     leaderboard, 
     totalQuestions,
     difficulty,
-    questionsReview
+    questionsReview,
+    category
 }: FinalStandingsProps) {
     const handleReturnToLobby = () => {
         router.visit(lobby.index().url);
@@ -194,6 +196,7 @@ export function FinalStandings({
                 difficulty={difficulty}
                 totalQuestions={totalQuestions}
                 playerCount={leaderboard.length}
+                category={category}
             />
 
             {/* Question Review Section */}

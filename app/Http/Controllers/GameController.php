@@ -239,11 +239,15 @@ class GameController extends Controller
             $timeTaken = $game->started_at->diffInMinutes($game->completed_at);
         }
         
+        // Get category name using the service
+        $categoryName = $this->triviaService->getCategoryName($game->category_id); 
+        
         return Inertia::render('game/results', [
             'game' => [
                 'id' => $game->id,
                 'difficulty' => $game->difficulty->value,
                 'total_questions' => $game->total_questions,
+                'category' => $categoryName,
                 'started_at' => $game->started_at?->format('Y-m-d H:i:s'),
                 'completed_at' => $game->completed_at?->format('Y-m-d H:i:s'),
                 'time_taken_minutes' => $timeTaken,
