@@ -334,6 +334,31 @@ export interface JoinRoomFormData {
     room_code: string;
 }
 
+// Game History Types
+
+export interface HistoryEntry {
+    id: number;
+    room_code: string;
+    completed_at: string;
+    participant_count: number;
+    participants_preview: ParticipantPreview[];
+    user_score: number;
+    user_position: number;
+    total_questions: number;
+    difficulty: DifficultyLevel;
+    category?: number;
+}
+
+export interface ParticipantPreview {
+    id: number;
+    name: string;
+    score: number;
+}
+
+export interface GameHistoryProps {
+    gameHistory: HistoryEntry[];
+}
+
 // Global route helper (provided by Ziggy/Laravel)
 declare global {
     function route(name: string, params?: unknown): string;

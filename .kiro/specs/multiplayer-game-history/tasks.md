@@ -34,15 +34,15 @@
     - Handle authorization failures with redirect and error message
     - _Requirements: 3.1_
 
-- [ ] 4. Create frontend history components
-  - [ ] 4.1 Create GameHistory component
+- [x] 4. Create frontend history components
+  - [x] 4.1 Create GameHistory component
     - Accept gameHistory prop array
     - Render section header with "Last 7 days" label
     - Map history entries to HistoryEntry components
     - Show HistoryEmptyState when no games exist
     - _Requirements: 1.1, 6.1, 6.2, 6.3_
 
-  - [ ] 4.2 Create HistoryEntry component
+  - [x] 4.2 Create HistoryEntry component
     - Show completion time using relative format (e.g., "2 days ago")
     - Show metadata in format "Room code: HVAC12 | Category: Sports"
        - If there is no category since it's optional then just show room code
@@ -50,7 +50,7 @@
     - Add hover effects for better UX
     - _Requirements: 1.4, 3.1, 4.1, 4.2, 4.5, 6.4_
 
-  - [ ] 4.4 Create HistoryEmptyState component
+  - [x] 4.4 Create HistoryEmptyState component
     - Display empty state card with dashed border
     - Show history icon and helpful message
     - _Requirements: 6.3_

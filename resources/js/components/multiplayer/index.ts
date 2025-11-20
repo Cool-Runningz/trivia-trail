@@ -12,3 +12,7 @@ export { ConnectionStatus, ConnectionIndicator } from './ConnectionStatus';
 export { MultiplayerErrorBoundary, useErrorHandler } from './ErrorBoundary';
 export { CancelGameButton } from './CancelGameButton';
 export { NextQuestionButton } from './NextQuestionButton';
+export { GameHistory } from './GameHistory';
+export { HistoryEntry } from './HistoryEntry';
+export { HistoryEmptyState } from './HistoryEmptyState';
+export { ParticipantAvatars } from './ParticipantAvatars';
