@@ -48,7 +48,7 @@ class MultiplayerGameController extends Controller
             ->first();
 
         if (!$participant) {
-            return redirect()->route('multiplayer.lobby')
+            return redirect()->route('lobby.index')
                 ->withErrors(['room' => 'You are not a participant in this room.']);
         }
 
@@ -281,13 +281,21 @@ class MultiplayerGameController extends Controller
             ->with(['host', 'participants.user', 'settings', 'multiplayerGame'])
             ->firstOrFail();
 
-        // Ensure user is a participant
+        // Authorize viewing the game room
+        try {
+            $this->authorize('view', $room);
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            return redirect()->route('lobby.index')
+                ->with('error', 'You do not have access to this game.');
+        }
+
+        // Get participant for current user
         $participant = $room->participants()
             ->where('user_id', auth()->id())
             ->first();
 
         if (!$participant) {
-            return redirect()->route('multiplayer.lobby')
+            return redirect()->route('lobby.index')
                 ->withErrors(['room' => 'You are not a participant in this room.']);
         }
 

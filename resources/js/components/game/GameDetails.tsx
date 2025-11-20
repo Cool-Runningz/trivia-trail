@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart3, Clock, Target, Trophy, Users, BookOpen } from 'lucide-react';
 import { type DifficultyLevel } from '@/types';
 
+//TODO: Instead of passing down the individual props, just pass in the `game` object and destructure from there.
 interface GameDetailsProps {
     difficulty: DifficultyLevel;
     totalQuestions: number;

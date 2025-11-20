@@ -23,13 +23,13 @@
     - Handle cases where game data is incomplete
     - _Requirements: 1.1, 1.5_
 
-- [ ] 3. Add authorization for viewing historical games
-  - [ ] 3.1 Create or update GameRoomPolicy
+- [x] 3. Add authorization for viewing historical games
+  - [x] 3.1 Create or update GameRoomPolicy
     - Add `view()` method to check if user was a participant
     - Allow viewing completed games for participants
     - _Requirements: 3.1_
 
-  - [ ] 3.2 Update MultiplayerGameController results method
+  - [x] 3.2 Update MultiplayerGameController results method
     - Add authorization check using policy
     - Handle authorization failures with redirect and error message
     - _Requirements: 3.1_
@@ -43,26 +43,16 @@
     - _Requirements: 1.1, 6.1, 6.2, 6.3_
 
   - [ ] 4.2 Create HistoryEntry component
-    - Display position badge with medal emojis for top 3
     - Show completion time using relative format (e.g., "2 days ago")
-    - Display user score, total possible points, and participant count
-    - Show difficulty badge and game metadata
-    - Render ParticipantAvatars component
+    - Show metadata in format "Room code: HVAC12 | Category: Sports"
+       - If there is no category since it's optional then just show room code
     - Make entire card clickable link to results page
     - Add hover effects for better UX
     - _Requirements: 1.4, 3.1, 4.1, 4.2, 4.5, 6.4_
 
-  - [ ] 4.3 Create ParticipantAvatars component
-    - Display first 3 participant avatars in stacked layout
-    - Show "+N" badge for remaining participants
-    - Use Avatar component with initials fallback
-    - Apply proper spacing and border styling
-    - _Requirements: 4.2, 4.3, 4.4_
-
   - [ ] 4.4 Create HistoryEmptyState component
     - Display empty state card with dashed border
     - Show history icon and helpful message
-    - Encourage users to create or join rooms
     - _Requirements: 6.3_
 
 - [ ] 5. Integrate history into lobby page
@@ -78,11 +68,6 @@
     - _Requirements: 6.1, 6.2, 6.5_
 
 - [ ] 6. Add helper utilities
-  - [ ] 6.1 Create position label helper function
-    - Return medal emoji and text for positions 1-3
-    - Return "#N" format for other positions
-    - _Requirements: 4.5_
-
   - [ ] 6.2 Add date formatting utility
     - Use date-fns formatDistanceToNow for relative dates
     - Handle edge cases for very recent games
