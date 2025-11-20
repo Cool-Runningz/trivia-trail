@@ -15,4 +15,3 @@ export { NextQuestionButton } from './NextQuestionButton';
 export { GameHistory } from './GameHistory';
 export { HistoryEntry } from './HistoryEntry';
 export { HistoryEmptyState } from './HistoryEmptyState';
-export { ParticipantAvatars } from './ParticipantAvatars';

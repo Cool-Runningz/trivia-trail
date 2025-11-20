@@ -108,30 +108,74 @@ class LobbyController extends Controller
             ->whereHas('participants', function ($query) use ($user) {
                 $query->where('user_id', $user->id);
             })
-            ->with(['settings'])
+            ->with([
+                'participants.user:id,name,email',
+                'multiplayerGame.game',
+                'settings',
+            ])
             ->orderBy('updated_at', 'desc')
             ->limit(20)
             ->get();
     }
 
     /**
-     * Format a game room into a simple history entry.
-     * Just basic info to link to the results page.
+     * Format a game room into a history entry with all required fields.
      */
     protected function formatHistoryEntry(GameRoom $room, User $user): ?array
     {
-        // Handle cases where settings are missing
-        if (!$room->settings) {
-            \Log::warning("Missing settings for room {$room->id}");
+        // Handle cases where required data is missing
+        if (!$room->settings || !$room->multiplayerGame || !$room->multiplayerGame->game) {
+            \Log::warning("Incomplete game data for room {$room->id}");
             return null;
-        }
+        } 
+
+        $rankedParticipants = $room->participants
+            ->sortByDesc('score')
+            ->values();
+
+        // Calculate proper ranking with tie handling
+        $userPosition = $this->calculateUserPosition($rankedParticipants, $user->id);
+
+
 
         return [
             'id' => $room->id,
             'room_code' => $room->room_code,
             'completed_at' => $room->updated_at->toISOString(),
+            'participant_count' => $room->participants->count(),
+            'user_position' => $userPosition,
+            'total_questions' => $room->multiplayerGame->game->total_questions,
             'difficulty' => $room->settings->difficulty->value,
-            'category_id' => $room->settings->category_id,
         ];
+    }
+
+    /**
+     * Calculate user position with proper tie handling.
+     * Players with the same score get the same rank.
+     * Uses the same logic as MultiplayerGameService::generateLeaderboard
+     */
+    protected function calculateUserPosition($rankedParticipants, int $userId): int
+    {
+        $position = 1;
+        $previousScore = null;
+        $actualPosition = 1;
+
+        foreach ($rankedParticipants as $participant) {
+            // Handle ties - participants with same score get same position
+            if ($previousScore !== null && $participant->score !== $previousScore) {
+                $position = $actualPosition;
+            }
+
+            // If this is our user, return their rank
+            if ($participant->user_id === $userId) {
+                return $position;
+            }
+
+            $previousScore = $participant->score;
+            $actualPosition++;
+        }
+
+        // Fallback - should not happen if user is in participants
+        return $rankedParticipants->search(fn($p) => $p->user_id === $userId) + 1;
     }
 }

@@ -7,6 +7,7 @@ import { type BreadcrumbItem, type LobbyPageProps } from '@/types';
 import { RoomBrowser } from '@/components/multiplayer/RoomBrowser';
 import { CreateRoomModal } from '@/components/multiplayer/CreateRoomModal';
 import { JoinRoomModal } from '@/components/multiplayer/JoinRoomModal';
+import { GameHistory } from '@/components/multiplayer/GameHistory';
 import AppLayout from '@/layouts/app-layout';
 import { dashboard } from '@/routes';
 import lobby from '@/routes/lobby';
@@ -23,7 +24,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function Lobby({ rooms, activeGames, categories }: LobbyPageProps) {
+export default function Lobby({ rooms, activeGames, categories, gameHistory }: LobbyPageProps) {
     const [createModalOpen, setCreateModalOpen] = useState(false);
     const [joinModalOpen, setJoinModalOpen] = useState(false);
     const shownFlashMessages = useRef<Set<string>>(new Set());
@@ -122,21 +123,13 @@ export default function Lobby({ rooms, activeGames, categories }: LobbyPageProps
                     </>
                 )}
 
-                {/* Info Card */}
-                {(!activeGames || activeGames.length === 0) && (
-                    <>
-                        <Separator />
-                        <Card className="bg-muted/50">
-                            <CardContent className="pt-6">
-                                <div className="text-center space-y-2">
-                                    <p className="text-sm text-muted-foreground">
-                                        All rooms are private. Create a new room or join an existing one using a room code.
-                                    </p>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </>
-                )}
+                {/* Game History */}
+                <Separator />
+                <div className="space-y-4">
+                    <GameHistory gameHistory={gameHistory} />
+                </div>
+
+              
                 </div>
             </div>
 

@@ -55,13 +55,13 @@
     - Show history icon and helpful message
     - _Requirements: 6.3_
 
-- [ ] 5. Integrate history into lobby page
-  - [ ] 5.1 Update Lobby page TypeScript interface
+- [x] 5. Integrate history into lobby page
+  - [x] 5.1 Update Lobby page TypeScript interface
     - Add gameHistory prop to LobbyProps interface
     - Define HistoryEntry and ParticipantPreview types
     - _Requirements: 1.1_
 
-  - [ ] 5.2 Add GameHistory section to Lobby page
+  - [x] 5.2 Add GameHistory section to Lobby page
     - Render GameHistory component below RoomBrowser
     - Add proper spacing and section separation
     - Ensure responsive layout on mobile devices

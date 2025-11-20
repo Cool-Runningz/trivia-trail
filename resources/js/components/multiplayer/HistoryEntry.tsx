@@ -4,7 +4,7 @@ import { type HistoryEntry as HistoryEntryType } from '@/types';
 import { Link } from '@inertiajs/react';
 import { formatDistanceToNow } from 'date-fns';
 import { ChevronRight } from 'lucide-react';
-import { ParticipantAvatars } from './ParticipantAvatars';
+import multiplayer from '@/routes/multiplayer';
 
 interface HistoryEntryProps {
     entry: HistoryEntryType;
@@ -24,7 +24,7 @@ export function HistoryEntry({ entry }: HistoryEntryProps) {
 
     return (
         <Link
-            href={route('multiplayer.game.results', { room: entry.room_code })}
+            href={multiplayer.game.results(entry.room_code).url}
             className="block"
         >
             <Card className="cursor-pointer transition-colors hover:bg-accent">
@@ -35,22 +35,15 @@ export function HistoryEntry({ entry }: HistoryEntryProps) {
                                 <Badge variant="outline">
                                     {getPositionLabel(entry.user_position)}
                                 </Badge>
+                                <Badge variant="secondary" className="text-xs">
+                                    {entry.difficulty}
+                                </Badge>
                                 <span className="text-sm text-muted-foreground">
                                     {completedDate}
                                 </span>
                             </div>
 
                             <div className="flex items-center gap-4">
-                                <div className="text-sm">
-                                    <span className="font-medium">
-                                        {entry.user_score}
-                                    </span>
-                                    <span className="text-muted-foreground">
-                                        {' '}
-                                        / {entry.total_questions * 100} pts
-                                    </span>
-                                </div>
-
                                 <div className="text-sm text-muted-foreground">
                                     Room code: {entry.room_code}
                                 </div>
@@ -59,17 +52,11 @@ export function HistoryEntry({ entry }: HistoryEntryProps) {
                                     {entry.participant_count} players
                                 </div>
 
-                                <Badge variant="secondary" className="text-xs">
-                                    {entry.difficulty}
-                                </Badge>
+                                
                             </div>
                         </div>
 
                         <div className="flex items-center gap-3">
-                            <ParticipantAvatars
-                                participants={entry.participants_preview}
-                                total={entry.participant_count}
-                            />
                             <ChevronRight className="h-4 w-4 text-muted-foreground" />
                         </div>
                     </div>

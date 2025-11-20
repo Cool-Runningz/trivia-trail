@@ -314,6 +314,7 @@ export interface LobbyPageProps {
     rooms: GameRoom[];
     activeGames: GameRoom[];
     categories: Category[];
+    gameHistory: HistoryEntry[];
 }
 
 export interface RoomLobbyProps {
