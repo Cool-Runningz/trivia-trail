@@ -99,7 +99,9 @@ test('getQuestions validates parameters correctly', function () {
     ]);
 
     Http::assertSent(function ($request) {
-        return $request->data()['amount'] === 50;
+        $url = $request->url();
+        parse_str(parse_url($url, PHP_URL_QUERY), $params);
+        return isset($params['amount']) && $params['amount'] == 50;
     });
 });
 

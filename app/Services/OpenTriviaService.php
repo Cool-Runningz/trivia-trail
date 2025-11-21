@@ -13,8 +13,10 @@ class OpenTriviaService
     private const BASE_URL = 'https://opentdb.com';
     private const CATEGORIES_ENDPOINT = '/api_category.php';
     private const QUESTIONS_ENDPOINT = '/api.php';
+    private const TOKEN_ENDPOINT = '/api_token.php';
     private const CATEGORIES_CACHE_KEY = 'trivia_categories';
     private const CATEGORIES_CACHE_TTL = 3600; // 1 hour in seconds
+    private const TOKEN_CACHE_TTL = 19800; // 5.5 hours (buffer less than API's 6-hour expiry)
 
     /**
      * Fetch categories from Open Trivia Database API with caching
@@ -80,6 +82,14 @@ class OpenTriviaService
         try {
             $validatedParams = $this->validateQuestionParams($params);
             
+            // Try to add session token if available
+            $userId = $params['user_id'] ?? (auth()->check() ? auth()->id() : null);
+            $token = $this->getSessionToken($userId);
+            
+            if ($token) {
+                $validatedParams['token'] = $token;
+            }
+            
             $response = Http::timeout(15)
                 ->retry(3, 1000)
                 ->get(self::BASE_URL . self::QUESTIONS_ENDPOINT, $validatedParams);
@@ -94,7 +104,14 @@ class OpenTriviaService
                 throw new \Exception('Invalid API response format');
             }
 
-            // Check for API response codes
+            // Handle token exhaustion (code 4) by trying without token
+            if (isset($data['response_code']) && $data['response_code'] === 4 && $token) {
+                $this->clearToken($userId);
+                unset($validatedParams['token']);
+                return $this->getQuestions($validatedParams);
+            }
+
+            // Check for other API response codes
             if (isset($data['response_code']) && $data['response_code'] !== 0) {
                 throw new \Exception($this->getApiErrorMessage($data['response_code']));
             }
@@ -102,9 +119,7 @@ class OpenTriviaService
             return $this->processQuestions($data['results']);
         } catch (\Exception $e) {
             Log::error('Failed to fetch trivia questions', [
-                'params' => $params,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'error' => $e->getMessage()
             ]);
 
             return $this->handleApiErrors($e);
@@ -265,7 +280,6 @@ class OpenTriviaService
      */
     private function handleApiErrors(\Exception $exception): array
     {
-        // Return empty array with error information
         return [
             'error' => true,
             'message' => 'Unable to fetch questions at this time. Please try again later.',
@@ -290,4 +304,88 @@ class OpenTriviaService
             default => 'Unknown API error occurred'
         };
     }
+
+    /**
+     * Request a new session token from the API
+     *
+     * @return string|null
+     */
+    private function requestNewToken(): ?string
+    {
+        try {
+            $response = Http::timeout(10)
+                ->retry(2, 1000)
+                ->get(self::BASE_URL . self::TOKEN_ENDPOINT, ['command' => 'request']);
+
+            if (!$response->successful()) {
+                return null;
+            }
+
+            $data = $response->json();
+            
+            if (!isset($data['response_code']) || $data['response_code'] !== 0) {
+                return null;
+            }
+
+            return $data['token'] ?? null;
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Get session token from cache or request new one
+     *
+     * @param int|null $userId
+     * @return string|null
+     */
+    private function getSessionToken(?int $userId = null): ?string
+    {
+        $cacheKey = $this->getTokenCacheKey($userId);
+        
+        // Try to get token from cache
+        $token = Cache::get($cacheKey);
+        
+        if ($token) {
+            return $token;
+        }
+
+        // Request new token if not in cache
+        $token = $this->requestNewToken();
+        
+        if ($token) {
+            Cache::put($cacheKey, $token, self::TOKEN_CACHE_TTL);
+        }
+        
+        return $token;
+    }
+
+    /**
+     * Clear session token from cache
+     *
+     * @param int|null $userId
+     * @return void
+     */
+    private function clearToken(?int $userId = null): void
+    {
+        $cacheKey = $this->getTokenCacheKey($userId);
+        Cache::forget($cacheKey);
+    }
+
+    /**
+     * Generate cache key for session token
+     *
+     * @param int|null $userId
+     * @return string
+     */
+    private function getTokenCacheKey(?int $userId = null): string
+    {
+        if ($userId) {
+            return "trivia_token_user_{$userId}";
+        }
+        
+        return "trivia_token_guest_" . session()->getId();
+    }
+
+
 }
