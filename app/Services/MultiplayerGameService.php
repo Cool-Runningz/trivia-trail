@@ -45,6 +45,7 @@ class MultiplayerGameService
             $questionParams = [
                 'amount' => $room->settings->total_questions,
                 'difficulty' => $room->settings->difficulty->value,
+                'user_id' => $room->host_user_id, // Use host's user ID for session token association
             ];
 
             if ($room->settings->category_id) {

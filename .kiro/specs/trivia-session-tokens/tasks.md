@@ -102,14 +102,14 @@
   - Test cache cleanup and token clearing
   - _Requirements: 1.4, 3.1, 3.3, 3.4_
 
-- [ ] 4. Update existing game flow to use session tokens
+- [x] 4. Update existing game flow to use session tokens
   - Ensure GameController uses enhanced OpenTriviaService
   - Verify token persistence across multiple games
   - Test integration with existing game state management
   - Add any necessary user interface indicators
   - _Requirements: 1.5, 3.2_
 
-- [ ] 4.1 Test integration with existing game flow
+- [x] 4.1 Test integration with existing game flow
   - Verify tokens work with current GameController
   - Test token reuse across multiple game sessions
   - Ensure no breaking changes to existing functionality
