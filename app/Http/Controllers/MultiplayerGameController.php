@@ -592,12 +592,21 @@ class MultiplayerGameController extends Controller
         $participants = $room->participants()
             ->with('user')
             ->orderBy('score', 'desc')
+            ->orderBy('joined_at', 'asc') // Tie-breaker: earlier join time
             ->get();
 
         $position = 1;
-        return $participants->map(function ($participant) use (&$position) {
-            return [
-                'position' => $position++,
+        $previousScore = null;
+        $actualPosition = 1;
+
+        return $participants->map(function ($participant) use (&$position, &$previousScore, &$actualPosition) {
+            // Handle ties - participants with same score get same position
+            if ($previousScore !== null && $participant->score !== $previousScore) {
+                $position = $actualPosition;
+            }
+
+            $result = [
+                'position' => $position,
                 'participant' => [
                     'id' => $participant->id,
                     'user' => [
@@ -608,6 +617,11 @@ class MultiplayerGameController extends Controller
                 ],
                 'score' => $participant->score,
             ];
+
+            $previousScore = $participant->score;
+            $actualPosition++;
+
+            return $result;
         })->toArray();
     }
 }
