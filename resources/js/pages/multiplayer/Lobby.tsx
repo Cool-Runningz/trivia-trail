@@ -24,7 +24,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function Lobby({ rooms, activeGames, categories, gameHistory }: LobbyPageProps) {
+export default function Lobby({ activeGames, categories, gameHistory }: LobbyPageProps) {
     const [createModalOpen, setCreateModalOpen] = useState(false);
     const [joinModalOpen, setJoinModalOpen] = useState(false);
     const shownFlashMessages = useRef<Set<string>>(new Set());
