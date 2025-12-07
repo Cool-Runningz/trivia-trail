@@ -1,7 +1,9 @@
+# temporarily comment this out when needing to push latest FE files to DreamHost
+# /public/build
+
 /.phpunit.cache
 /bootstrap/ssr
 /node_modules
-/public/build
 /public/hot
 /public/storage
 /resources/js/actions
@@ -27,3 +29,5 @@ yarn-error.log
 /.vscode
 /.zed
 .DS_Store
+
+
