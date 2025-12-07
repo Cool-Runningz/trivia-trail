@@ -130,7 +130,7 @@ export default function Dashboard() {
                     <Card>
                         <CardContent className="pt-6">
                             <div className="text-center space-y-2">
-                                <div className="text-3xl font-bold text-primary">1000+</div>
+                                <div className="text-3xl font-bold text-primary">4000+</div>
                                 <p className="text-sm text-muted-foreground">Trivia Questions</p>
                             </div>
                         </CardContent>

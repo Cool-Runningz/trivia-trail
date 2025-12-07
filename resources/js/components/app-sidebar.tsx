@@ -15,7 +15,7 @@ import game from '@/routes/game';
 import lobby from '@/routes/lobby';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, Gamepad2, Users } from 'lucide-react';
+import { Code, LayoutGrid, Gamepad2, Users } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
@@ -36,19 +36,18 @@ const mainNavItems: NavItem[] = [
     },
 ];
 
-/* const footerNavItems: NavItem[] = [
+ const footerNavItems: NavItem[] = [
     {
-        title: 'Repository',
-        href: 'https://github.com/laravel/react-starter-kit',
-        icon: Folder,
+        title: 'GitHub',
+        href: 'https://github.com/Cool-Runningz/trivia-trail',
+        icon: Code,
     },
-    {
+   /* {
         title: 'Documentation',
         href: 'https://laravel.com/docs/starter-kits#react',
         icon: BookOpen,
-    },
-]; */
-const footerNavItems: NavItem[] = []
+    },*/
+]; 
 
 export function AppSidebar() {
     return (
