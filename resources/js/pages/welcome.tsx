@@ -114,7 +114,7 @@ export default function Welcome({
                                 Game Features
                             </h2>
                             <p className="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl dark:text-white">
-                                Everything you need for the ultimate trivia experience
+                                The ultimate trivia experience
                             </p>
                         </div>
                         <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-none">
